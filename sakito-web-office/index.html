@@ -7,195 +7,243 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.50.0/dist/tabler-icons.min.css">
 <style>
-/* layout: 2F lounge of the Sakito Web office (448x240 pixel canvas, HTML overlays, panels below). Remo-style: one LiveKit room for the floor; each person's "table" attribute decides who hears whom. */
+/* layout: full-viewport app. Header strip, then a map area (pixel canvas fitted to the space) with a video rail on the right while seated, a floating control bar at the bottom, and drawers/overlays on top. One LiveKit room per floor; each person's "table" attribute decides who hears whom. */
 :root{
   --bg:#e8eef2; --surface:#ffffff; --ink:#1d2433; --muted:#5b6476; --line:#cfd6df;
   --accent:#2f6fd6; --accent-soft:#e3edfc; --pix:#1d2433;
-  --warn:#a35a00; --warn-soft:#fdf0d8; --good:#2b6f48; --good-soft:#dff1e6; --bad:#a3312b; --bad-soft:#fae3e1;
+  --good:#2b9a5a; --good-soft:#dff1e6; --bad:#c2372f; --bad-soft:#fae3e1;
   --font-pixel:"DotGothic16","Hiragino Kaku Gothic ProN",monospace;
   --font-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
   color-scheme:light;
 }
 *{box-sizing:border-box}
-html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.6}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.6;overflow:hidden}
 button{font:inherit;color:inherit;cursor:pointer}
 a{color:inherit}
-button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.wrap{max-width:1160px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:16px}
-.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
-.brand{font-family:var(--font-pixel);font-size:14px;color:var(--accent);margin:0;letter-spacing:.08em}
-h1{font-family:var(--font-pixel);font-weight:400;font-size:30px;margin:0;line-height:1.2}
-h1 small{font-size:16px;color:var(--muted);margin-left:10px}
-.clock{font-family:var(--font-pixel);font-size:14px;color:var(--muted)}
-.toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
-.summary{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:var(--surface);border:2px solid var(--pix);font-size:13px;box-shadow:2px 2px 0 var(--pix)}
-.chip b{font-family:var(--font-pixel);font-weight:400;font-size:15px;font-variant-numeric:tabular-nums}
-.chip.busy{background:var(--accent-soft);color:var(--accent)}
-.actions{display:flex;flex-wrap:wrap;gap:8px}
-.pbtn{font-family:var(--font-pixel);font-size:14px;padding:6px 14px;border:2px solid var(--pix);background:var(--surface);box-shadow:3px 3px 0 var(--pix);text-decoration:none;display:inline-block}
-.pbtn.primary{background:var(--accent);color:#fff}
-.pbtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--pix)}
-
-/* ---------- stage ---------- */
-.stage-scroll{overflow-x:auto;border:3px solid var(--pix);box-shadow:5px 5px 0 var(--pix);background:#cfe6f6}
-.stage{position:relative;width:100%;min-width:910px;aspect-ratio:448/240}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.app{height:100vh;height:100dvh;display:flex;flex-direction:column}
+.top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px;background:var(--surface);border-bottom:3px solid var(--pix)}
+.top .ttl{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand{font-family:var(--font-pixel);font-size:13px;color:var(--accent);letter-spacing:.08em}
+.top h1{font-family:var(--font-pixel);font-weight:400;font-size:20px;margin:0;line-height:1.2;white-space:nowrap}
+.top .meta{display:flex;align-items:center;gap:14px;font-size:13px;color:var(--muted);white-space:nowrap}
+.top .meta b{font-family:var(--font-pixel);font-weight:400;color:var(--ink);font-size:15px}
+.top .meta a{font-size:12.5px;text-decoration:none;border:1.5px solid var(--pix);padding:1px 10px;color:var(--ink)}
+.main{flex:1;min-height:0;display:flex;position:relative}
+.stage-area{flex:1;min-width:0;overflow:auto;display:flex;padding:10px 10px 92px;background:#cfe6f6}
+.stage{position:relative;margin:auto;flex:none;border:3px solid var(--pix);box-shadow:4px 4px 0 var(--pix)}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .ov{position:absolute;inset:0;pointer-events:none}
 .ov > *{pointer-events:auto}
 .sign{position:absolute;transform:translate(-50%,-50%);font-family:var(--font-pixel);font-size:13px;color:#fff;background:var(--accent);padding:1px 10px;white-space:nowrap;pointer-events:none;border:2px solid var(--pix)}
-.plate{position:absolute;transform:translate(-50%,-50%);font-family:var(--font-pixel);font-size:10.5px;background:rgba(255,255,255,.88);color:var(--ink);border:1px solid rgba(29,36,51,.35);padding:0 6px;white-space:nowrap;line-height:1.45;pointer-events:none}
+.plate{position:absolute;transform:translate(-50%,-50%);font-family:var(--font-pixel);font-size:11px;background:rgba(255,255,255,.9);color:var(--ink);border:1px solid rgba(29,36,51,.35);padding:0 6px;white-space:nowrap;line-height:1.45;pointer-events:none}
 .plate .n{color:var(--muted);margin-left:5px;font-variant-numeric:tabular-nums}
 .plate.mine{background:var(--accent);color:#fff;border-color:var(--pix)}
 .plate.mine .n{color:#dce8ff}
 .plate.full .n{color:var(--bad)}
-.hot{position:absolute;background:transparent;border:2px solid transparent;padding:0;display:block}
+.hot{position:absolute;background:transparent;border:2px solid transparent;padding:0;display:block;border-radius:40%}
 .hot:hover,.hot:focus-visible{border-color:var(--accent);background:rgba(47,111,214,.08)}
-.hot .cap{position:absolute;left:50%;top:100%;transform:translate(-50%,3px);font-family:var(--font-pixel);font-size:10.5px;background:var(--pix);color:#fff;padding:0 6px;white-space:nowrap;display:none}
+.hot.sq{border-radius:0}
+.hot .cap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:var(--font-pixel);font-size:12px;background:var(--pix);color:#fff;padding:1px 8px;white-space:nowrap;display:none}
 .hot:hover .cap,.hot:focus-visible .cap{display:block}
+/* people on the map: pixel sprite (canvas) + round face above the head */
 .char{position:absolute;background:transparent;border:none;padding:0;z-index:2}
-.char:hover{outline:2px dashed var(--accent);outline-offset:2px}
-.char .nm{position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);font-family:var(--font-pixel);font-size:9.5px;background:rgba(29,36,51,.82);color:#fff;padding:0 4px;white-space:nowrap;pointer-events:none;line-height:1.45}
-.char .nm{display:none}
+.char .face{position:absolute;left:50%;bottom:calc(100% + 1px);transform:translateX(-50%);width:130%;min-width:26px;aspect-ratio:1;border-radius:50%;background:#2b3042;border:3px solid #fff;overflow:visible;box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.char .face .in{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#2b3042}
+.char .face .in canvas{position:static;width:58%;height:auto;image-rendering:pixelated;margin-top:30%}
+.char .face video{width:100%;height:100%;object-fit:cover}
+.char.incall .face{border-color:var(--good)}
+.char.incall.muted .face{border-color:#9aa3b5}
+.char.speaking .face{border-color:var(--good);box-shadow:0 0 0 3px rgba(43,154,90,.45)}
+.char .mute{position:absolute;right:-5px;bottom:-4px;width:15px;height:15px;border-radius:50%;background:var(--bad);color:#fff;font-size:10px;display:none;align-items:center;justify-content:center;border:1.5px solid #fff}
+.char.incall.muted .mute{display:flex}
+.char .nm{position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);font-family:var(--font-pixel);font-size:10.5px;background:rgba(29,36,51,.85);color:#fff;padding:0 5px;white-space:nowrap;pointer-events:none;line-height:1.45;display:none}
 .char:hover .nm,.char:focus-visible .nm,.char.me .nm{display:block}
 .char.me .nm{background:var(--accent)}
-.bubble{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);font-family:var(--font-pixel);font-size:12px;background:#fff;color:var(--ink);border:2px solid var(--pix);padding:1px 8px;white-space:nowrap;pointer-events:none;box-shadow:2px 2px 0 rgba(29,36,51,.35);max-width:none}
+.bubble{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);font-family:var(--font-pixel);font-size:12px;background:#fff;color:var(--ink);border:2px solid var(--pix);padding:1px 8px;white-space:nowrap;pointer-events:none;box-shadow:2px 2px 0 rgba(29,36,51,.35)}
 .bubble::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--pix)}
 .bubble:empty{display:none}
-.talk{position:absolute;top:-6px;right:-8px;width:8px;height:8px;background:#3caa66;border:2px solid var(--pix);display:none;pointer-events:none}
-.char.speaking .talk{display:block;animation:blink .6s steps(2) infinite}
-@keyframes blink{50%{opacity:.25}}
-
-/* ---------- panels ---------- */
-.panels{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:16px}
-.panel{background:var(--surface);border:2px solid var(--pix);box-shadow:4px 4px 0 var(--pix);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.panel h2{font-family:var(--font-pixel);font-weight:400;font-size:17px;margin:0;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-.panel h2 span{font-size:13px;color:var(--muted)}
-.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.tile{position:relative;aspect-ratio:4/3;background:#2b3042;border:2px solid var(--pix);display:flex;align-items:center;justify-content:center;overflow:hidden}
-.tile canvas{width:42%;height:auto;image-rendering:pixelated}
-.tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#2b3042}
-.tile video.mirror{transform:scaleX(-1)}
-.tile.speaking{outline:3px solid #3caa66;outline-offset:-3px}
-.tile .tn{position:absolute;left:4px;bottom:4px;font-size:11.5px;background:rgba(0,0,0,.55);color:#fff;padding:0 6px;max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tile .mic{position:absolute;right:4px;top:4px;font-size:10.5px;font-family:var(--font-pixel);background:rgba(0,0,0,.55);color:#fff;padding:0 5px}
-.tile .mic.off{background:var(--bad);color:#fff}
-.tile.empty{background:#e4e9ef;border-style:dashed;border-color:#aab3be}
-.tile.empty span{font-size:12px;color:var(--muted)}
-.controls{display:flex;flex-wrap:wrap;gap:8px}
-.btn{border:2px solid var(--pix);padding:6px 14px;background:var(--accent);color:#fff;font-weight:500;font-size:14px;white-space:nowrap}
-.btn.ghost{background:var(--surface);color:var(--ink)}
-.btn[aria-pressed="false"]{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
-.btn.ghost[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
-.btn:disabled{opacity:.5;cursor:default}
-.note{font-size:12.5px;color:var(--muted);margin:0}
-.chat{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:260px;min-height:120px;overflow-y:auto}
-.chat li{font-size:13.5px;overflow-wrap:anywhere}
+/* video rail */
+.rail{flex:none;width:230px;background:#20242f;border-left:3px solid var(--pix);display:flex;flex-direction:column;gap:8px;padding:10px 10px 92px;overflow-y:auto}
+.rail h2{font-family:var(--font-pixel);font-weight:400;font-size:14px;color:#fff;margin:0;display:flex;justify-content:space-between}
+.rail h2 span{color:#aab3be;font-size:12px}
+.vcard{position:relative;aspect-ratio:4/3;background:#2b3042;border:2px solid #3a4152;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex:none}
+.vcard video{width:100%;height:100%;object-fit:cover}
+.vcard video.contain{object-fit:contain;background:#000}
+.vcard canvas{width:30%;height:auto;image-rendering:pixelated}
+.vcard .tn{position:absolute;left:6px;bottom:5px;font-size:12px;background:rgba(0,0,0,.6);color:#fff;padding:0 7px;border-radius:4px;max-width:calc(100% - 40px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vcard .mi{position:absolute;right:6px;bottom:5px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;background:rgba(0,0,0,.6);color:#fff}
+.vcard .mi.off{background:var(--bad)}
+.vcard.speaking{border-color:var(--good);box-shadow:0 0 0 2px var(--good)}
+.vcard.share{border-color:#ffb020;cursor:pointer}
+.vcard.share .tn{background:#ffb020;color:var(--ink)}
+video.mirror{transform:scaleX(-1)}
+/* control bar */
+.bar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:2px;background:var(--surface);border:2px solid var(--pix);box-shadow:4px 4px 0 var(--pix);border-radius:14px;padding:6px 8px;z-index:20}
+.bar .sep{width:1px;background:var(--line);margin:4px 4px}
+.cb{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:64px;padding:5px 6px 3px;border:none;background:transparent;border-radius:10px;font-size:11.5px;color:var(--ink);white-space:nowrap}
+.cb i{font-size:22px;line-height:1;width:38px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.cb:hover{background:var(--bg)}
+.cb.off i{background:var(--bad-soft);color:var(--bad)}
+.cb.on i{background:var(--good-soft);color:var(--good)}
+.cb.active i{background:var(--accent);color:#fff}
+.cb.exit{color:var(--bad)}
+.cb.exit i{background:var(--bad);color:#fff}
+.cb .badge{position:absolute;top:0;right:8px;min-width:18px;height:18px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;line-height:18px;padding:0 5px}
+.cb .badge:empty{display:none}
+.toast{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);background:var(--pix);color:#fff;font-size:13.5px;padding:6px 14px;border-radius:8px;z-index:25;max-width:min(90%,560px);text-align:center;pointer-events:none;transition:opacity .3s}
+.toast.hide{opacity:0}
+/* drawers */
+.drawer{position:absolute;top:10px;right:10px;bottom:92px;width:min(340px,calc(100% - 20px));background:var(--surface);border:2px solid var(--pix);box-shadow:4px 4px 0 var(--pix);border-radius:10px;display:flex;flex-direction:column;z-index:22}
+.d-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:2px solid var(--pix)}
+.d-head h2{font-family:var(--font-pixel);font-weight:400;font-size:16px;margin:0}
+.d-head h2 span{font-size:12.5px;color:var(--muted);margin-left:6px}
+.xbtn{border:none;background:transparent;font-size:20px;line-height:1;padding:2px 4px}
+.d-body{flex:1;min-height:0;overflow-y:auto;padding:12px 14px}
+.chat{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.chat li{font-size:14px;overflow-wrap:anywhere}
 .chat li b{font-weight:700;margin-right:6px}
 .chat li time{font-size:11.5px;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums}
 .chat li.sys{color:var(--muted);font-size:12.5px}
-.add{display:flex;gap:8px}
-.add input,.field input{flex:1;min-width:0;padding:7px 10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+.d-foot{border-top:2px solid var(--pix);padding:10px 12px;display:flex;gap:8px}
+.d-foot input{flex:1;min-width:0;padding:7px 10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px;border-radius:6px}
+.btn{border:2px solid var(--pix);padding:6px 14px;background:var(--accent);color:#fff;font-weight:500;font-size:14px;white-space:nowrap;border-radius:6px}
+.btn.ghost{background:var(--surface);color:var(--ink)}
+.btn.danger{background:var(--bad);color:#fff}
+.btn:disabled{opacity:.55;cursor:default}
 .roster{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.roster li{border:2px solid var(--pix);background:var(--bg);padding:6px 10px;display:flex;flex-direction:column;gap:4px}
+.roster li{border:2px solid var(--pix);background:var(--bg);padding:7px 10px;border-radius:6px;display:flex;flex-direction:column;gap:3px}
 .roster li.mine{background:var(--accent-soft)}
 .roster .rh{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .roster .rh b{font-family:var(--font-pixel);font-weight:400;font-size:14px}
-.roster .who{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
-.mini{font-size:12px;padding:1px 10px;border:1.5px solid var(--pix);background:var(--surface)}
-.empty-msg{font-size:13px;color:var(--muted);margin:0}
-
-/* ---------- modal ---------- */
-.modal{position:fixed;inset:0;z-index:60;background:rgba(10,15,25,.55);display:flex;align-items:center;justify-content:center;padding:20px}
-.modal[hidden]{display:none}
-.md-box{background:var(--surface);border:3px solid var(--pix);box-shadow:6px 6px 0 var(--pix);width:min(460px,100%);max-height:100%;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
-.md-box h3{font-family:var(--font-pixel);font-weight:400;font-size:20px;margin:0}
+.roster .who{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.mini{font-size:12px;padding:1px 10px;border:1.5px solid var(--pix);background:var(--surface);border-radius:4px}
+.note{font-size:12.5px;color:var(--muted);margin:0}
+/* big view */
+.big{position:absolute;inset:0;bottom:0;background:#171a22;z-index:15;display:flex;flex-direction:column;padding:12px 12px 92px;gap:10px}
+.big-head{display:flex;justify-content:space-between;align-items:center;color:#fff}
+.big-head h2{font-family:var(--font-pixel);font-weight:400;font-size:16px;margin:0}
+.big-body{flex:1;min-height:0;display:grid;gap:10px}
+.big-body.grid{grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));align-content:center}
+.big-body.share{grid-template-columns:minmax(0,1fr) 220px}
+.big-body.share .side{display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.big-body .vcard{aspect-ratio:auto;min-height:0}
+.big-body.grid .vcard{aspect-ratio:16/10}
+/* modal */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(10,15,25,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.md-box{background:var(--surface);border:3px solid var(--pix);box-shadow:6px 6px 0 var(--pix);border-radius:12px;width:min(820px,100%);max-height:100%;overflow:auto;padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+.md-box.sm{width:min(420px,100%)}
+.md-box h3{font-family:var(--font-pixel);font-weight:400;font-size:21px;margin:0}
+.prejoin{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px}
+.pv{position:relative;aspect-ratio:4/3;background:#20242f;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#c9d2e0;font-size:13.5px;text-align:center;padding:0}
+.pv video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pv .pvmsg{padding:16px}
+.meter{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--good);transition:width .08s}
 .field{display:flex;flex-direction:column;gap:4px}
 .field label,.field .lab{font-size:12.5px;color:var(--muted)}
+.field input,.field select{padding:7px 10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px;border-radius:6px;min-width:0}
+.toggles{display:flex;gap:8px;flex-wrap:wrap}
+.tg{display:flex;align-items:center;gap:6px;border:2px solid var(--pix);border-radius:8px;padding:4px 12px;background:var(--surface);font-size:13.5px}
+.tg i{font-size:18px}
+.tg[aria-pressed="false"]{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
 .swatches{display:flex;flex-wrap:wrap;gap:8px}
-.sw{width:30px;height:30px;border:2px solid var(--pix);padding:0}
+.sw{width:28px;height:28px;border:2px solid var(--pix);padding:0;border-radius:6px}
 .sw[aria-pressed="true"]{outline:3px solid var(--accent);outline-offset:2px}
 .styles{display:flex;flex-wrap:wrap;gap:6px}
-.styles button{border:1.5px solid var(--pix);background:var(--surface);padding:2px 12px;font-size:13px}
+.styles button{border:1.5px solid var(--pix);background:var(--surface);padding:2px 12px;font-size:13px;border-radius:4px}
 .styles button[aria-pressed="true"]{background:var(--accent);color:#fff}
-.preview-face{display:flex;align-items:center;gap:12px}
-.preview-face canvas{width:42px;height:66px;image-rendering:pixelated;border:2px solid var(--pix);background:#f4f8fc}
-
-@media (max-width:980px){.panels{grid-template-columns:1fr 1fr}.panels .panel:first-child{grid-column:1 / -1}}
-@media (max-width:720px){
-  .wrap{padding:14px 10px 40px;gap:12px}
-  .panels{grid-template-columns:1fr}
-  .stage{min-width:0}
-  .stage-scroll{box-shadow:3px 3px 0 var(--pix)}
-  .plate,.sign,.hot .cap,.char .nm{display:none!important}
-  .bubble{font-size:9.5px;padding:0 4px;bottom:calc(100% + 3px)}
-  .pbtn{font-size:12.5px;padding:4px 9px;box-shadow:2px 2px 0 var(--pix)}
-  .chip{font-size:11.5px;padding:3px 8px;box-shadow:1px 1px 0 var(--pix)}
-  .toolbar{flex-direction:column;align-items:stretch}
-  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .clock{font-size:12px}
+.lookrow{display:flex;align-items:center;gap:14px}
+.lookrow canvas{width:36px;height:57px;image-rendering:pixelated;border:2px solid var(--pix);background:#f4f8fc;border-radius:6px;flex:none}
+.err{color:var(--bad);font-size:13px;margin:0;min-height:1em}
+.row-end{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+@media (max-width:820px){
+  .prejoin{grid-template-columns:1fr}
+  .rail{width:132px;padding:8px 8px 92px}
+  .rail h2 span{display:none}
+  .top h1{font-size:16px}
+  .top .meta .clk{display:none}
 }
-@media (max-width:600px){h1{font-size:24px}}
-@media (prefers-reduced-motion: reduce){.char.speaking .talk{animation:none}}
+@media (max-width:720px){
+  .cb{min-width:44px;font-size:0}
+  .cb i{width:36px;height:34px}
+  .cb .badge{font-size:11px;right:0}
+  .bar{padding:4px;gap:0;bottom:10px;max-width:calc(100% - 12px)}
+  .bar .sep{margin:4px 1px}
+  .plate,.sign,.hot .cap{display:none!important}
+  .bubble{font-size:10px;padding:0 4px}
+  .big-body.share{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
+  .big-body.share .side{flex-direction:row;overflow-x:auto}
+  .big-body.share .side .vcard{width:120px}
+  .brand{display:none}
+  .main{flex-direction:column}
+  .rail{order:-1;width:auto;height:112px;flex-direction:row;padding:8px;border-left:none;border-bottom:3px solid var(--pix);overflow-x:auto;overflow-y:hidden}
+  .rail h2,.rail .note{display:none}
+  .rail .vcard{height:100%;aspect-ratio:4/3}
+  .stage-area{padding-bottom:84px}
+  .drawer{bottom:84px}
+}
+@media (prefers-reduced-motion: reduce){.toast{transition:none}}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="app">
   <header class="top">
-    <div>
-      <p class="brand">SAKITO WEB</p>
-      <h1>バーチャルオフィス<small>2F ラウンジ</small></h1>
+    <div class="ttl"><span class="brand">SAKITO WEB</span><h1>2F ラウンジ</h1></div>
+    <div class="meta">
+      <span>いる人 <b id="count">0</b></span>
+      <span class="clk" id="clock"></span>
+      <a href="https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR">1F(社内専用)</a>
     </div>
-    <div class="clock" id="clock"></div>
   </header>
-
-  <div class="toolbar">
-    <div class="summary" id="summary"></div>
-    <div class="actions">
-      <a class="pbtn" href="https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR">1F(社内専用)へ</a>
-      <button class="pbtn" data-action="exit">退室</button>
-    </div>
-  </div>
-
-  <div class="stage-scroll">
-    <div class="stage" id="stage">
-      <canvas id="cv" width="448" height="240" role="img" aria-label="Sakito Webオフィス2階のラウンジ。丸テーブルが6つとソファ席、個室ブース、エレベーターホールがあり、テーブルをクリックするとそこに座れる"></canvas>
-      <div class="ov" id="ov"></div>
-    </div>
-  </div>
-
-  <div class="panels">
-    <section class="panel" aria-labelledby="h-table">
-      <h2 id="h-table"><b id="table-title" style="font-weight:400">テーブルに座っていません</b><span id="table-count"></span></h2>
-      <div class="tiles" id="tiles"></div>
-      <div class="controls">
-        <button class="btn ghost" data-action="mic" id="mic-btn" aria-pressed="true">マイク オン</button>
-        <button class="btn ghost" data-action="cam" id="cam-btn" aria-pressed="true">カメラ オン</button>
-        <button class="btn ghost" data-action="leave" id="leave-btn">席を立つ</button>
-        <button class="btn" data-action="audio" id="audio-btn" hidden>音声を有効にする</button>
+  <div class="main" id="main">
+    <div class="stage-area" id="stage-area">
+      <div class="stage" id="stage">
+        <canvas id="cv" width="448" height="240" role="img" aria-label="Sakito Webオフィス2階のラウンジ。丸テーブルが6つとソファ席、個室ブース、エレベーターホールがあり、テーブルをクリックするとそこに座れる"></canvas>
+        <div class="ov" id="ov"></div>
       </div>
-      <p class="note">同じテーブルに座っている人とだけ、声と映像がつながります。席を立つとカメラとマイクは自動で止まります。</p>
+    </div>
+    <aside class="rail" id="rail" hidden aria-label="同じテーブルの人の映像"></aside>
+
+    <section class="big" id="big" hidden aria-label="大きく表示">
+      <div class="big-head"><h2 id="big-title">会話中</h2><button class="btn ghost" data-action="big">地図に戻る</button></div>
+      <div class="big-body grid" id="big-body"></div>
     </section>
-    <section class="panel" aria-labelledby="h-chat">
-      <h2 id="h-chat">テーブルチャット<span id="chat-where"></span></h2>
-      <ul class="chat" id="chat" aria-live="polite"></ul>
-      <form class="add" id="chat-form"><input id="chat-input" aria-label="テーブルにメッセージを送る" placeholder="同じテーブルの人に送る" autocomplete="off"><button class="btn" type="submit">送信</button></form>
+
+    <section class="drawer" id="drawer-chat" hidden aria-labelledby="h-chat">
+      <div class="d-head"><h2 id="h-chat">チャット<span id="chat-where"></span></h2><button class="xbtn" data-action="chat" aria-label="チャットを閉じる"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+      <div class="d-body"><ul class="chat" id="chat" aria-live="polite"></ul></div>
+      <form class="d-foot" id="chat-form"><input id="chat-input" aria-label="テーブルにメッセージを送る" placeholder="同じテーブルの人に送る" autocomplete="off"><button class="btn" type="submit" aria-label="送信"><i class="ti ti-send" aria-hidden="true"></i></button></form>
     </section>
-    <section class="panel" aria-labelledby="h-roster">
-      <h2 id="h-roster">フロアの人</h2>
-      <ul class="roster" id="roster"></ul>
+
+    <section class="drawer" id="drawer-people" hidden aria-labelledby="h-people">
+      <div class="d-head"><h2 id="h-people">参加者</h2><button class="xbtn" data-action="people" aria-label="参加者を閉じる"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+      <div class="d-body"><ul class="roster" id="roster"></ul></div>
     </section>
+
+    <div class="toast hide" id="toast" role="status"></div>
+
+    <nav class="bar" id="bar" aria-label="操作">
+      <button class="cb" id="cb-cam" data-action="cam"><i class="ti ti-video" aria-hidden="true"></i><span>カメラ</span></button>
+      <button class="cb" id="cb-mic" data-action="mic"><i class="ti ti-microphone" aria-hidden="true"></i><span>マイク</span></button>
+      <button class="cb" id="cb-share" data-action="share"><i class="ti ti-screen-share" aria-hidden="true"></i><span>画面共有</span></button>
+      <span class="sep"></span>
+      <button class="cb" id="cb-chat" data-action="chat"><i class="ti ti-message" aria-hidden="true"></i><span>チャット</span><b class="badge" id="chat-badge"></b></button>
+      <button class="cb" id="cb-people" data-action="people"><i class="ti ti-users" aria-hidden="true"></i><span>参加者</span></button>
+      <button class="cb" id="cb-big" data-action="big"><i class="ti ti-layout-grid" aria-hidden="true"></i><span>大きく表示</span></button>
+      <button class="cb" id="cb-leave" data-action="leave"><i class="ti ti-armchair" aria-hidden="true"></i><span>席を立つ</span></button>
+      <span class="sep"></span>
+      <button class="cb exit" data-action="exit"><i class="ti ti-door-exit" aria-hidden="true"></i><span>退出</span></button>
+    </nav>
   </div>
-
-  <p class="note" id="note">入室すると、エレベーターで2階に上がってきます。テーブルをクリックするとそこへ歩いて座り、同じテーブルの人とだけ会話できます。</p>
 </div>
-
 <div class="modal" id="modal" hidden></div>
 <div id="audio-sink" hidden></div>
 <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.23.0/dist/livekit-client.umd.js"></script>
-
 <script>
 (function () {
   "use strict";
@@ -504,19 +552,24 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
     P("#ffffff", 349, 197, 3, 2); P("#2b2f38", 356, 196, 6, 3); P("#4a86e0", 357, 196, 4, 2);
   }
 
+  /* ----- table plates sit below each table so faces above heads stay clear ----- */
+  TABLES.forEach(function (t) { if (t.id !== "sofa" && t.id !== "booth") t.plate = [t.cx, t.cy + 31]; });
+  SOFA.plate = [318, 106]; BOOTH.plate = [357, 234];
+
   /* ----- people & LiveKit room ----- */
   var COLORS = ["#2f6fd6", "#d0603a", "#3caa66", "#8a5cd0", "#e0a020", "#d04a7a", "#1d3a6e", "#4aa3e0"];
   var HAIRS = { short: "ショート", spiky: "ツンツン", bob: "ボブ", pony: "ポニー" };
   var LK = window.LivekitClient;
   var me = null, people = {}, room = null;
-  var state = { mic: true, cam: true };
-  function loadProfile() { try { var s = JSON.parse(localStorage.getItem("sw2f-profile") || "null"); if (s && s.name) return s; } catch (e) {} return null; }
-  function saveProfile(p) { try { localStorage.setItem("sw2f-profile", JSON.stringify(p)); } catch (e) {} }
+  var state = { mic: true, cam: true, camId: "", micId: "" };
+  var ui = { drawer: "", big: false, unread: 0 };
+  function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function load(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
   function normLook(l) { l = l || {}; return { color: /^#[0-9a-f]{6}$/i.test(l.color || "") ? l.color : COLORS[0], hair: "#141414", style: HAIRS[l.style] ? l.style : "short" }; }
   function all() { return Object.keys(people).map(function (k) { return people[k]; }); }
   function visible(p) { return !!p; }
   function addPerson(o) {
-    var p = { id: o.id, name: o.name, look: o.look, x: o.x, y: o.y, path: [], want: "", table: null, seat: -1, spot: o.spot || null, bubble: "", bubbleUntil: 0, speakUntil: 0, mic: false, cam: false, isMe: !!o.isMe, wave: 0, joined: o.joined || Date.now(), part: o.part || null };
+    var p = { id: o.id, name: o.name, look: o.look, x: o.x, y: o.y, path: [], want: "", table: null, seat: -1, spot: o.spot || null, bubble: "", bubbleUntil: 0, speakUntil: 0, isMe: !!o.isMe, wave: 0, joined: o.joined || Date.now(), part: o.part || null };
     people[p.id] = p; return p;
   }
   function occupants(tid) { return all().filter(function (p) { return p.table === tid; }); }
@@ -530,7 +583,7 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
     pts = pts.concat([[via[0][0], LANE]]).concat(via);
     p.path = pts.map(function (q) { return [q[0], q[1]]; });
   }
-  // Everyone computes the same seating from the "table" attributes: who joined the table list first keeps priority.
+  // Every browser computes the same seating from the "table" attributes; earlier joiners keep priority.
   function layout(instant) {
     var assign = {};
     TABLES.forEach(function (t) {
@@ -552,15 +605,18 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
         p.table = null; p.seat = -1; p.spot = STAND;
       }
     });
-    if (me && me.want && !assign[me.id]) { setNote(TBY[me.want].name + "は満席でした。"); setTable(""); }
+    if (me && me.want && !assign[me.id]) { toast(TBY[me.want].name + "は満席でした"); setTable(""); }
   }
   function say(p, text, ms) { p.bubble = text; p.bubbleUntil = performance.now() + (ms || 3500); }
 
   var chats = {};
   function chatOf(tid) { return chats[tid] || (chats[tid] = []); }
   function sys(tid, text) { if (!tid) return; chatOf(tid).push({ sys: true, text: text, at: new Date() }); trim(tid); if (me && me.table === tid) renderChat(); }
-  function post(tid, p, text) { chatOf(tid).push({ who: p.name, color: p.look.color, text: text, at: new Date() }); trim(tid); if (me && me.table === tid) renderChat(); }
-  function trim(tid) { var c = chatOf(tid); if (c.length > 120) c.splice(0, c.length - 120); }
+  function post(tid, p, text) {
+    chatOf(tid).push({ who: p.name, color: p.look.color, text: text, at: new Date() }); trim(tid);
+    if (me && me.table === tid) { if (!p.isMe && ui.drawer !== "chat") { ui.unread++; renderControls(); } renderChat(); }
+  }
+  function trim(tid) { var c = chatOf(tid); if (c.length > 150) c.splice(0, c.length - 150); }
 
   function personFrom(part, arriving) {
     var look = {}; try { look = JSON.parse((part.attributes && part.attributes.look) || "{}"); } catch (e) {}
@@ -572,7 +628,6 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
     p.name = part.name || p.name; p.look = normLook(look); p.part = part;
     p.want = (part.attributes && part.attributes.table) || "";
     if (p.want && !TBY[p.want]) p.want = "";
-    p.mic = part.isMicrophoneEnabled; p.cam = part.isCameraEnabled;
     return p;
   }
   var elevTimer = null;
@@ -583,13 +638,26 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
     var prev = me.table;
     me.want = tid || "";
     layout(false);
-    if (prev && prev !== me.table) sys(prev, me.name + "さんが席を立ちました");
+    if (prev && prev !== me.table) { sys(prev, me.name + "さんが席を立ちました"); ui.unread = 0; }
     if (me.table && me.table !== prev) sys(me.table, me.name + "さんが座りました");
-    room.localParticipant.setAttributes({ table: me.want }).catch(function () { setNote("席の情報を送れませんでした。通信状態を確認してください。"); });
+    room.localParticipant.setAttributes({ table: me.want }).catch(function () { toast("席の情報を送れませんでした。通信状態を確認してください"); });
+    if (!me.table && ui.big) ui.big = false;
     syncMedia(); renderUI();
   }
 
-  // Subscribe only to people at my table, and only send my mic/camera while I am seated.
+  /* media: subscribe only to people at my table; send my mic/camera/screen only while seated */
+  function lp() { return room && room.localParticipant; }
+  function micOn(p) { return p.isMe ? !!(lp() && lp().isMicrophoneEnabled) : !!(p.part && p.part.isMicrophoneEnabled); }
+  function camTrack(p) {
+    var part = p.isMe ? lp() : p.part; if (!part || !part.getTrackPublication) return null;
+    var pub = part.getTrackPublication(LK.Track.Source.Camera);
+    return pub && pub.track && !pub.isMuted ? pub.track : null;
+  }
+  function shareTrack(p) {
+    var part = p.isMe ? lp() : p.part; if (!part || !part.getTrackPublication) return null;
+    var pub = part.getTrackPublication(LK.Track.Source.ScreenShare);
+    return pub && pub.track ? pub.track : null;
+  }
   var mediaQueue = Promise.resolve();
   function syncMedia() {
     if (!room || !me) return;
@@ -599,10 +667,18 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
       part.trackPublications.forEach(function (pub) { if (pub.isSubscribed !== same) pub.setSubscribed(same); });
     });
     mediaQueue = mediaQueue.then(function () {
-      var on = !!(me && me.table), lp = room.localParticipant;
-      return lp.setMicrophoneEnabled(on && state.mic).catch(function () { state.mic = false; setNote("マイクを使えませんでした。ブラウザのアドレスバー横からマイクを許可してください。"); })
-        .then(function () { return lp.setCameraEnabled(on && state.cam).catch(function () { state.cam = false; setNote("カメラを使えませんでした。ブラウザのアドレスバー横からカメラを許可してください。"); }); })
-        .then(function () { me.mic = on && state.mic; me.cam = on && state.cam; renderTiles(); renderControls(); });
+      var on = !!(me && me.table), L = lp(); if (!L) return;
+      return L.setMicrophoneEnabled(on && state.mic).catch(function () { state.mic = false; toast("マイクを使えませんでした。ブラウザのアドレスバー横からマイクを許可してください"); })
+        .then(function () { return L.setCameraEnabled(on && state.cam).catch(function () { state.cam = false; toast("カメラを使えませんでした。ブラウザのアドレスバー横からカメラを許可してください"); }); })
+        .then(function () { if (!on && L.isScreenShareEnabled) return L.setScreenShareEnabled(false).catch(function () {}); })
+        .then(function () { refreshMedia(); });
+    });
+  }
+  function toggleShare() {
+    if (!me || !me.table) { toast("画面共有はテーブルに座ってから使えます"); return; }
+    var L = lp(), on = !L.isScreenShareEnabled;
+    L.setScreenShareEnabled(on).then(function () { if (on) { toast("画面を共有しています。同じテーブルの人に見えています"); } refreshMedia(); }, function () {
+      toast("画面共有を開始できませんでした。スマホのブラウザなど、対応していない環境があります"); refreshMedia();
     });
   }
 
@@ -611,9 +687,9 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
     r.on(E.ParticipantConnected, function (part) { personFrom(part, true); layout(false); syncMedia(); renderUI(); });
     r.on(E.ParticipantDisconnected, function (part) {
       var p = people[part.identity]; if (!p) return;
-      if (me && me.table && p.table === me.table) sys(me.table, p.name + "さんが退室しました");
+      if (me && me.table && p.table === me.table) sys(me.table, p.name + "さんが退出しました");
       delete people[part.identity];
-      var el = charEls[part.identity]; if (el) { el.remove(); delete charEls[part.identity]; }
+      var el = charEls[part.identity]; if (el) { detachIn(el); el.remove(); delete charEls[part.identity]; }
       layout(false); renderUI();
     });
     r.on(E.ParticipantAttributesChanged, function (changed, part) {
@@ -627,16 +703,14 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
       syncMedia(); renderUI();
     });
     r.on(E.TrackPublished, function () { syncMedia(); });
-    r.on(E.TrackSubscribed, function (track) {
+    r.on(E.TrackSubscribed, function (track, pub, part) {
       if (track.kind === "audio") { var a = track.attach(); document.getElementById("audio-sink").appendChild(a); }
-      renderTiles();
+      if (track.source === LK.Track.Source.ScreenShare) { var p = people[part.identity]; toast((p ? p.name : "") + "さんが画面を共有しました"); ui.big = true; }
+      refreshMedia();
     });
-    r.on(E.TrackUnsubscribed, function (track) { track.detach().forEach(function (el) { el.remove(); }); renderTiles(); });
-    function onMute(pub, part) { var p = part && people[part.identity]; if (p && !p.isMe) { p.mic = part.isMicrophoneEnabled; p.cam = part.isCameraEnabled; } renderTiles(); }
-    r.on(E.TrackMuted, onMute); r.on(E.TrackUnmuted, onMute);
-    r.on(E.TrackUnpublished, function () { renderTiles(); });
-    r.on(E.LocalTrackPublished, function () { renderTiles(); });
-    r.on(E.LocalTrackUnpublished, function () { renderTiles(); });
+    r.on(E.TrackUnsubscribed, function (track) { track.detach().forEach(function (el) { if (el.tagName === "AUDIO") el.remove(); }); refreshMedia(); });
+    r.on(E.TrackMuted, refreshMedia); r.on(E.TrackUnmuted, refreshMedia); r.on(E.TrackUnpublished, refreshMedia);
+    r.on(E.LocalTrackPublished, refreshMedia); r.on(E.LocalTrackUnpublished, refreshMedia);
     r.on(E.ActiveSpeakersChanged, function (speakers) {
       var now = performance.now(), on = {};
       speakers.forEach(function (s) { on[s.identity] = 1; });
@@ -650,12 +724,19 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
       say(p, text.length > 14 ? text.slice(0, 14) + "…" : text);
       if (me && me.table && msg.t === me.table) post(me.table, p, text);
     });
-    r.on(E.AudioPlaybackStatusChanged, function () { document.getElementById("audio-btn").hidden = r.canPlaybackAudio; });
+    r.on(E.AudioPlaybackStatusChanged, function () { if (!r.canPlaybackAudio) toast("画面のどこかをクリックすると、相手の声が聞こえるようになります"); });
     r.on(E.Disconnected, function () {
-      setNote("通話から切断されました。ページを再読み込みすると入り直せます。");
-      document.getElementById("audio-sink").innerHTML = "";
-      renderUI();
+      if (leaving) return;
+      resetRoom();
+      openGone("接続が切れました", "ネットワークが不安定になったか、しばらく操作がなかったため切断されました。");
     });
+  }
+  var leaving = false;
+  function resetRoom() {
+    Object.keys(charEls).forEach(function (k) { detachIn(charEls[k]); charEls[k].remove(); });
+    charEls = {}; people = {}; me = null; room = null; ui.big = false; ui.drawer = ""; ui.unread = 0; chats = {};
+    document.getElementById("audio-sink").innerHTML = "";
+    renderUI();
   }
 
   function connect(prof, pass) {
@@ -667,20 +748,23 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
         });
       })
       .then(function (data) {
-        room = new LK.Room({ adaptiveStream: true, dynacast: true });
+        var opts = { adaptiveStream: true, dynacast: true };
+        if (state.camId) opts.videoCaptureDefaults = { deviceId: state.camId };
+        if (state.micId) opts.audioCaptureDefaults = { deviceId: state.micId };
+        room = new LK.Room(opts);
         wire(room);
         return room.connect(data.url, data.token, { autoSubscribe: false });
       })
       .then(function () {
-        var lp = room.localParticipant, look = normLook({ color: prof.color, style: prof.style });
-        me = addPerson({ id: lp.identity, name: prof.name, look: look, x: ENTRY.x, y: 24, spot: ENTRY, isMe: true, joined: lp.joinedAt ? +lp.joinedAt : Date.now(), part: lp });
+        var L = lp(), look = normLook({ color: prof.color, style: prof.style });
+        me = addPerson({ id: L.identity, name: prof.name, look: look, x: ENTRY.x, y: 24, spot: ENTRY, isMe: true, joined: L.joinedAt ? +L.joinedAt : Date.now(), part: L });
         room.remoteParticipants.forEach(function (part) { personFrom(part, false); });
         layout(true);
         openElevatorBriefly();
-        setTimeout(function () { me.path = [[ENTRY.x, ENTRY.y]]; say(me, "こんにちは"); me.wave = 12; }, 700);
-        lp.setAttributes({ table: "", look: JSON.stringify(look) }).catch(function () {});
-        document.getElementById("audio-btn").hidden = room.canPlaybackAudio;
-        setNote("入室しました。テーブルをクリックすると、そこへ歩いて座り、同じテーブルの人と話せます。");
+        setTimeout(function () { if (me) { me.path = [[ENTRY.x, ENTRY.y]]; say(me, "こんにちは"); me.wave = 12; } }, 700);
+        L.setAttributes({ table: "", look: JSON.stringify(look) }).catch(function () {});
+        if (room.startAudio) room.startAudio().catch(function () {});
+        toast("テーブルをクリックすると、そこに座って会話に入れます");
         renderUI();
       });
   }
@@ -695,7 +779,7 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
       else { p.x += dx / d * sp; p.y += dy / d * sp; }
     });
   }
-  function onArrive(p) { if (p.isMe && p.table) { p.wave = 10; setNote(TBY[p.table].name + "に座りました。同じテーブルの人と話せます。"); renderUI(); } }
+  function onArrive(p) { if (p.isMe && p.table) { p.wave = 10; toast(TBY[p.table].name + "に座りました。同じテーブルの人と話せます"); renderUI(); } }
 
   /* ----- render loop ----- */
   var STATIC = [
@@ -776,12 +860,12 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
   (function buildStatic() {
     var s = document.createElement("div"); s.className = "sign"; s.textContent = "2F LOUNGE"; place(s, 192, 15); ov.appendChild(s);
     TABLES.forEach(function (t) {
-      var b = document.createElement("button"); b.className = "hot"; b.setAttribute("data-action", "sit"); b.setAttribute("data-table", t.id);
+      var b = document.createElement("button"); b.className = "hot" + (t.id === "booth" || t.id === "sofa" ? " sq" : ""); b.setAttribute("data-action", "sit"); b.setAttribute("data-table", t.id);
       b.setAttribute("aria-label", t.name + "に座る"); b.innerHTML = '<span class="cap">ここに座る</span>';
       box(b, t.box[0], t.box[1], t.box[2], t.box[3]); ov.appendChild(b);
       var pl = document.createElement("div"); pl.className = "plate"; place(pl, t.plate[0], t.plate[1]); ov.appendChild(pl); plates[t.id] = pl;
     });
-    var a = document.createElement("a"); a.className = "hot"; a.href = "https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR"; a.setAttribute("aria-label", "エレベーターで1階のオフィスへ");
+    var a = document.createElement("a"); a.className = "hot sq"; a.href = "https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR"; a.setAttribute("aria-label", "エレベーターで1階のオフィスへ(社内専用)");
     a.innerHTML = '<span class="cap">1F(社内専用)へ</span>'; box(a, 396, 0, 46, 34); ov.appendChild(a); hookElevator(a);
     var lb = document.createElement("div"); lb.className = "plate"; lb.textContent = "エレベーターホール"; place(lb, 418, 96); ov.appendChild(lb);
   })();
@@ -792,154 +876,292 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
       pl.innerHTML = esc(t.name) + '<span class="n">' + n + "/" + cap + "</span>";
     });
   }
+
+  /* video/face helpers: one track may be attached to several elements (map face, rail, big view) */
+  function faceCanvas(p, w, h) {
+    var c = document.createElement("canvas"); c.width = w || 14; c.height = h || 22;
+    var g = c.getContext("2d"); g.imageSmoothingEnabled = false;
+    drawSprite(g, 7, 22, p.look, "normal", { sitting: true, noShadow: true });
+    return c;
+  }
+  function headCanvas(p) {
+    var c = document.createElement("canvas"); c.width = 14; c.height = 12;
+    var g = c.getContext("2d"); g.imageSmoothingEnabled = false;
+    drawSprite(g, 7, 22, p.look, "normal", { sitting: true, noShadow: true });
+    return c;
+  }
+  function attachVideo(track, mirror, contain) {
+    var v = track.attach(); v.muted = true; v.playsInline = true; v.autoplay = true;
+    v.className = (mirror ? "mirror " : "") + (contain ? "contain" : "");
+    v._lkTrack = track; return v;
+  }
+  function detachIn(root) { root.querySelectorAll("video").forEach(function (v) { if (v._lkTrack) v._lkTrack.detach(v); }); }
+
   function charEl(p) {
     var el = charEls[p.id];
     if (!el) {
       el = document.createElement("button"); el.className = "char" + (p.isMe ? " me" : "");
       el.setAttribute("data-action", "person"); el.setAttribute("data-id", p.id);
-      el.innerHTML = '<span class="bubble"></span><span class="talk"></span><span class="nm"></span>';
+      el.innerHTML = '<span class="face"><span class="in"></span><span class="mute"><i class="ti ti-microphone-off" aria-hidden="true"></i></span><span class="bubble"></span></span><span class="nm"></span>';
       ov.appendChild(el); charEls[p.id] = el;
     }
     return el;
   }
+  function paintFace(p, el) {
+    var tr = (p.table && (p.isMe || (me && p.table === me.table))) ? camTrack(p) : null;
+    var key = tr ? "v:" + (tr.sid || tr.mediaStreamTrack && tr.mediaStreamTrack.id) : "f:" + p.look.color + p.look.style;
+    if (el._key === key) return;
+    el._key = key;
+    var inn = el.querySelector(".in"); detachIn(inn); inn.innerHTML = "";
+    inn.appendChild(tr ? attachVideo(tr, p.isMe) : headCanvas(p));
+  }
   function updateOverlay(now) {
     Object.keys(people).forEach(function (k) {
       var p = people[k], el = charEl(p);
-      el.hidden = !visible(p);
-      if (el.hidden) return;
       box(el, p.x - 7, p.y - 22, 14, 22);
       var nm = el.querySelector(".nm"); if (nm.textContent !== p.name) nm.textContent = p.name;
       el.setAttribute("aria-label", p.name + (p.table ? "(" + TBY[p.table].name + ")" : ""));
       var bt = now < p.bubbleUntil ? p.bubble : "";
       var bu = el.querySelector(".bubble"); if (bu.textContent !== bt) bu.textContent = bt;
-      el.classList.toggle("speaking", now < p.speakUntil && p.mic);
+      var incall = !!p.table && !p.path.length;
+      el.classList.toggle("incall", incall);
+      el.classList.toggle("muted", incall && !micOn(p));
+      el.classList.toggle("speaking", incall && now < p.speakUntil);
+      paintFace(p, el);
     });
-    if (tick % 6 === 0) renderSpeaking(now);
+    if (tick % 4 === 0) renderSpeaking(now);
   }
 
-  /* ----- panels ----- */
-  function faceCanvas(p) {
-    var c = document.createElement("canvas"); c.width = 14; c.height = 22;
-    var g = c.getContext("2d"); g.imageSmoothingEnabled = false;
-    drawSprite(g, 7, 22, p.look, "normal", { sitting: true, noShadow: true });
-    return c;
+  /* ----- rail, big view ----- */
+  function tableMembers() {
+    if (!me || !me.table) return [];
+    var list = occupants(me.table);
+    list.sort(function (a, b) { return (a.isMe ? 1 : 0) - (b.isMe ? 1 : 0) || a.joined - b.joined; });
+    return list;
   }
-  var attached = [];
-  function renderTiles() {
-    var tilesEl = document.getElementById("tiles"), title = document.getElementById("table-title"), cnt = document.getElementById("table-count");
-    attached.forEach(function (a) { a.track.detach(a.el); });
-    attached = [];
-    tilesEl.innerHTML = "";
-    if (!me || !me.table) {
-      title.textContent = "テーブルに座っていません"; cnt.textContent = "";
-      var e = document.createElement("div"); e.className = "tile empty"; e.style.gridColumn = "1 / -1"; e.style.aspectRatio = "auto"; e.style.padding = "18px";
-      e.innerHTML = "<span>" + (me ? "フロアのテーブルをクリックすると、座って会話に入れます" : "入室すると、ここに同じテーブルの人の映像が並びます") + "</span>"; tilesEl.appendChild(e);
-      document.getElementById("leave-btn").disabled = true;
-      return;
+  function vcard(p, opt) {
+    opt = opt || {};
+    var d = document.createElement("div"); d.className = "vcard" + (opt.share ? " share" : ""); d.setAttribute(opt.share ? "data-share" : "data-pid", p.id);
+    var tr = opt.share ? shareTrack(p) : camTrack(p);
+    if (tr) d.appendChild(attachVideo(tr, p.isMe && !opt.share, !!opt.share)); else d.appendChild(faceCanvas(p));
+    if (opt.share) { d.insertAdjacentHTML("beforeend", '<span class="tn">' + esc(p.name) + (p.isMe ? "(あなた)" : "さん") + "の画面</span>"); d.setAttribute("data-action", "big"); d.setAttribute("role", "button"); d.setAttribute("tabindex", "0"); }
+    else {
+      var m = micOn(p);
+      d.insertAdjacentHTML("beforeend", '<span class="tn">' + esc(p.name) + (p.isMe ? "(あなた)" : "") + '</span><span class="mi' + (m ? "" : " off") + '" aria-label="' + (m ? "マイク オン" : "ミュート中") + '"><i class="ti ti-microphone' + (m ? "" : "-off") + '" aria-hidden="true"></i></span>');
     }
-    var t = TBY[me.table], list = occupants(t.id);
-    list.sort(function (a, b) { return (b.isMe ? 1 : 0) - (a.isMe ? 1 : 0); });
-    title.textContent = t.name; cnt.textContent = list.length + "/" + t.seats.length + "人";
-    list.forEach(function (p) {
-      var d = document.createElement("div"); d.className = "tile"; d.setAttribute("data-tile", p.id);
-      var pub = p.part && p.part.getTrackPublication ? p.part.getTrackPublication(LK.Track.Source.Camera) : null;
-      if (pub && pub.track && !pub.isMuted) {
-        var v = pub.track.attach(); v.muted = true; v.playsInline = true; if (p.isMe) v.className = "mirror";
-        d.appendChild(v); attached.push({ track: pub.track, el: v });
-      } else d.appendChild(faceCanvas(p));
-      var mic = p.isMe ? me.mic : !!(p.part && p.part.isMicrophoneEnabled);
-      d.insertAdjacentHTML("beforeend", '<span class="tn">' + esc(p.name) + (p.isMe ? "(あなた)" : "") + '</span><span class="mic' + (mic ? "" : " off") + '">' + (mic ? "MIC" : "ミュート") + "</span>");
-      tilesEl.appendChild(d);
-    });
-    for (var i = list.length; i < t.seats.length; i++) { var e2 = document.createElement("div"); e2.className = "tile empty"; e2.innerHTML = "<span>空席</span>"; tilesEl.appendChild(e2); }
-    document.getElementById("leave-btn").disabled = false;
+    return d;
   }
+  function renderRail() {
+    var rail = document.getElementById("rail");
+    detachIn(rail); rail.innerHTML = "";
+    var list = tableMembers();
+    rail.hidden = !list.length || ui.big;
+    if (rail.hidden) { fit(); return; }
+    rail.insertAdjacentHTML("beforeend", "<h2>" + esc(TBY[me.table].name) + "<span>" + list.length + "/" + TBY[me.table].seats.length + "人</span></h2>");
+    list.forEach(function (p) { if (shareTrack(p)) rail.appendChild(vcard(p, { share: true })); });
+    list.forEach(function (p) { rail.appendChild(vcard(p)); });
+    if (list.length === 1) rail.insertAdjacentHTML("beforeend", '<p class="note" style="color:#aab3be">まだ誰も座っていません。誰かがこのテーブルに来ると、ここに映像が並びます。</p>');
+    fit();
+  }
+  function renderBig() {
+    var big = document.getElementById("big"), body = document.getElementById("big-body");
+    detachIn(body); body.innerHTML = "";
+    var list = tableMembers();
+    if (!list.length) ui.big = false;
+    big.hidden = !ui.big;
+    if (!ui.big) return;
+    document.getElementById("big-title").textContent = TBY[me.table].name + "で会話中(" + list.length + "人)";
+    var sharer = list.filter(function (p) { return shareTrack(p); })[0];
+    if (sharer) {
+      body.className = "big-body share";
+      var main = vcard(sharer, { share: true }); main.removeAttribute("data-action"); main.removeAttribute("role"); main.removeAttribute("tabindex"); main.style.cursor = "default";
+      body.appendChild(main);
+      var side = document.createElement("div"); side.className = "side";
+      list.forEach(function (p) { side.appendChild(vcard(p)); });
+      body.appendChild(side);
+    } else {
+      body.className = "big-body grid";
+      list.forEach(function (p) { body.appendChild(vcard(p)); });
+    }
+  }
+  function refreshMedia() { renderRail(); renderBig(); renderControls(); }
   function renderSpeaking(now) {
-    document.querySelectorAll("[data-tile]").forEach(function (el) { var p = people[el.getAttribute("data-tile")]; el.classList.toggle("speaking", !!p && now < p.speakUntil); });
+    document.querySelectorAll("[data-pid]").forEach(function (el) { var p = people[el.getAttribute("data-pid")]; el.classList.toggle("speaking", !!p && now < p.speakUntil); });
   }
+
+  /* ----- drawers and controls ----- */
   function renderChat() {
     var ul = document.getElementById("chat"), where = document.getElementById("chat-where"), input = document.getElementById("chat-input");
-    if (!me || !me.table) { ul.innerHTML = '<li class="sys">テーブルに座ると、そのテーブルの人とチャットできます。</li>'; where.textContent = ""; input.disabled = true; return; }
+    if (!me || !me.table) { ul.innerHTML = '<li class="sys">テーブルに座ると、同じテーブルの人とチャットできます。</li>'; where.textContent = ""; input.disabled = true; return; }
     input.disabled = false; where.textContent = TBY[me.table].name;
     var c = chatOf(me.table);
     ul.innerHTML = c.length ? c.map(function (m) {
       if (m.sys) return '<li class="sys">' + esc(m.text) + "<time>" + hhmm(m.at) + "</time></li>";
       return '<li><b style="color:' + esc(m.color) + '">' + esc(m.who) + "</b>" + esc(m.text) + "<time>" + hhmm(m.at) + "</time></li>";
     }).join("") : '<li class="sys">まだメッセージはありません</li>';
-    ul.scrollTop = ul.scrollHeight;
+    var body = ul.parentNode; body.scrollTop = body.scrollHeight;
   }
   function renderRoster() {
-    if (!me) { document.getElementById("roster").innerHTML = '<li><div class="who">入室するとフロアの様子が見えます</div></li>'; return; }
+    var r = document.getElementById("roster");
+    if (!me) { r.innerHTML = '<li><div class="who">入室するとフロアの様子が見えます</div></li>'; return; }
     var html = TABLES.map(function (t) {
       var list = occupants(t.id), mine = me.table === t.id, full = list.length >= t.seats.length;
-      return '<li class="' + (mine ? "mine" : "") + '"><div class="rh"><b>' + esc(t.name) + '</b>' +
-        (mine ? '<span class="note">あなたの席</span>' : '<button class="mini" data-action="sit" data-table="' + t.id + '"' + (full ? " disabled" : "") + ">" + (full ? "満席" : "ここに座る") + "</button>") +
+      return '<li class="' + (mine ? "mine" : "") + '"><div class="rh"><b>' + esc(t.name) + " " + list.length + "/" + t.seats.length + '</b>' +
+        (mine ? '<span class="note">あなたの席</span>' : (full ? '<span class="note">満席</span>' : '<button class="mini" data-action="sit" data-table="' + t.id + '">ここへ行く</button>')) +
         '</div><div class="who">' + (list.length ? list.map(function (p) { return esc(p.name) + (p.isMe ? "(あなた)" : ""); }).join("、") : "だれもいません") + "</div></li>";
     }).join("");
     var standing = all().filter(function (p) { return !p.table; });
-    if (standing.length) html += '<li><div class="rh"><b>立ち話・休憩</b></div><div class="who">' + standing.map(function (p) { return esc(p.name) + (p.isMe ? "(あなた)" : ""); }).join("、") + "</div></li>";
-    document.getElementById("roster").innerHTML = html;
+    if (standing.length) html += '<li><div class="rh"><b>席にいない人</b></div><div class="who">' + standing.map(function (p) { return esc(p.name) + (p.isMe ? "(あなた)" : ""); }).join("、") + "</div></li>";
+    r.innerHTML = html;
   }
-  function renderSummary() {
-    var talking = TABLES.filter(function (t) { return occupants(t.id).length >= 2; }).length;
-    var seat = me && me.table ? TBY[me.table].name : (me ? "未着席" : "未入室");
-    document.getElementById("summary").innerHTML =
-      '<span class="chip">2Fにいる人 <b>' + all().length + "</b></span>" +
-      '<span class="chip">会話中のテーブル <b>' + talking + "</b></span>" +
-      '<span class="chip' + (me && me.table ? " busy" : "") + '">あなたの席 <b>' + esc(seat) + "</b></span>";
+  function setCb(id, cls, icon, label) {
+    var b = document.getElementById(id); b.className = "cb" + (cls ? " " + cls : "");
+    b.querySelector("i").className = "ti " + icon; b.querySelector("span").textContent = label; b.setAttribute("aria-label", label);
   }
   function renderControls() {
-    var m = document.getElementById("mic-btn"), c = document.getElementById("cam-btn");
-    m.setAttribute("aria-pressed", String(state.mic)); m.textContent = state.mic ? "マイク オン" : "マイク オフ";
-    c.setAttribute("aria-pressed", String(state.cam)); c.textContent = state.cam ? "カメラ オン" : "カメラ オフ";
+    var L = lp(), seated = !!(me && me.table);
+    var camLive = seated && L && L.isCameraEnabled, micLive = seated && L && L.isMicrophoneEnabled;
+    setCb("cb-cam", state.cam ? (camLive ? "on" : "") : "off", state.cam ? "ti-video" : "ti-video-off", state.cam ? "カメラ オン" : "カメラ オフ");
+    setCb("cb-mic", state.mic ? (micLive ? "on" : "") : "off", state.mic ? "ti-microphone" : "ti-microphone-off", state.mic ? "マイク オン" : "ミュート中");
+    var sharing = !!(L && L.isScreenShareEnabled);
+    setCb("cb-share", sharing ? "active" : "", sharing ? "ti-screen-share-off" : "ti-screen-share", sharing ? "共有をやめる" : "画面共有");
+    setCb("cb-chat", ui.drawer === "chat" ? "active" : "", "ti-message", "チャット");
+    document.getElementById("chat-badge").textContent = ui.unread ? String(Math.min(ui.unread, 99)) : "";
+    setCb("cb-people", ui.drawer === "people" ? "active" : "", "ti-users", "参加者");
+    setCb("cb-big", ui.big ? "active" : "", ui.big ? "ti-map-2" : "ti-layout-grid", ui.big ? "地図に戻る" : "大きく表示");
+    document.getElementById("cb-leave").hidden = !seated;
+    document.getElementById("drawer-chat").hidden = ui.drawer !== "chat";
+    document.getElementById("drawer-people").hidden = ui.drawer !== "people";
+    document.getElementById("count").textContent = all().length;
   }
-  function renderUI() { renderPlates(); renderSummary(); renderTiles(); renderChat(); renderRoster(); renderControls(); }
-  function setNote(t) { document.getElementById("note").textContent = t; }
+  function renderUI() { renderPlates(); renderRail(); renderBig(); renderChat(); renderRoster(); renderControls(); }
+  var toastTimer = null;
+  function toast(t) { var el = document.getElementById("toast"); el.textContent = t; el.classList.remove("hide"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.classList.add("hide"); }, 4200); }
+  function setNote(t) { toast(t); }
 
-  /* ----- entry ----- */
+  /* ----- fit the map into the available space ----- */
+  var stageEl = document.getElementById("stage"), areaEl = document.getElementById("stage-area");
+  function fit() {
+    var cs = getComputedStyle(areaEl);
+    var w = areaEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8;
+    var h = areaEl.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 8;
+    var sw = Math.max(0, Math.min(w, h * W / H));
+    if (window.innerWidth < 720) sw = Math.max(sw, 660);
+    stageEl.style.width = Math.floor(sw) + "px"; stageEl.style.height = Math.floor(sw * H / W) + "px";
+  }
+  window.addEventListener("resize", fit);
+
+  /* ----- modal: pre-join check, exit confirm ----- */
+  var modal = document.getElementById("modal");
+  function openModal(html, sm) { modal.hidden = false; modal.innerHTML = '<div class="md-box' + (sm ? " sm" : "") + '" role="dialog" aria-modal="true">' + html + "</div>"; }
+  function closeModal() { stopPreview(); modal.hidden = true; modal.innerHTML = ""; }
+
+  var pre = { stream: null, ac: null, raf: 0 };
+  function stopPreview() {
+    if (pre.stream) pre.stream.getTracks().forEach(function (t) { t.stop(); });
+    pre.stream = null; cancelAnimationFrame(pre.raf);
+    if (pre.ac) { try { pre.ac.close(); } catch (e) {} pre.ac = null; }
+  }
+  function startPreview() {
+    var msg = document.getElementById("pv-msg");
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { if (msg) msg.textContent = "このブラウザではカメラとマイクを使えません。"; return; }
+    stopPreview();
+    var c = { video: state.camId ? { deviceId: { exact: state.camId } } : true, audio: state.micId ? { deviceId: { exact: state.micId } } : true };
+    if (msg) msg.textContent = "カメラとマイクを準備しています…";
+    navigator.mediaDevices.getUserMedia(c).then(function (stream) {
+      if (modal.hidden) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+      pre.stream = stream;
+      var v = document.getElementById("pv-video"); v.srcObject = stream; v.hidden = false;
+      if (msg) msg.textContent = "";
+      try {
+        var AC = window.AudioContext || window.webkitAudioContext; pre.ac = new AC();
+        var an = pre.ac.createAnalyser(); an.fftSize = 512; pre.ac.createMediaStreamSource(stream).connect(an);
+        var buf = new Uint8Array(an.fftSize), bar = document.getElementById("pv-level");
+        (function loop() { an.getByteTimeDomainData(buf); var s = 0; for (var i = 0; i < buf.length; i++) { var x = (buf[i] - 128) / 128; s += x * x; } var lvl = Math.min(1, Math.sqrt(s / buf.length) * 4); if (bar) bar.style.width = Math.round(lvl * 100) + "%"; pre.raf = requestAnimationFrame(loop); })();
+      } catch (e) {}
+      fillDevices();
+    }, function () {
+      if (msg) msg.textContent = "カメラかマイクを使えませんでした。ブラウザのアドレスバー横の設定から許可してください。カメラなしでも入室できます。";
+    });
+  }
+  function fillDevices() {
+    navigator.mediaDevices.enumerateDevices().then(function (ds) {
+      [["pv-cam", "videoinput", "camId"], ["pv-mic", "audioinput", "micId"]].forEach(function (x) {
+        var sel = document.getElementById(x[0]); if (!sel) return;
+        var list = ds.filter(function (d) { return d.kind === x[1]; });
+        sel.innerHTML = list.map(function (d, i) { return '<option value="' + esc(d.deviceId) + '">' + esc(d.label || (x[1] === "videoinput" ? "カメラ " : "マイク ") + (i + 1)) + "</option>"; }).join("");
+        var cur = pre.stream && pre.stream.getTracks().filter(function (t) { return t.kind === (x[1] === "videoinput" ? "video" : "audio"); })[0];
+        var curId = cur && cur.getSettings ? cur.getSettings().deviceId : "";
+        if (curId) sel.value = curId;
+        sel.parentNode.hidden = list.length < 2;
+      });
+    }).catch(function () {});
+  }
+
   var draft = null;
   function openEntry() {
-    var base = loadProfile() || { name: "", color: COLORS[0], style: "short" };
+    var base = load("sw2f-profile") || { name: "", color: COLORS[0], style: "short" };
     draft = { name: base.name, color: base.color, style: base.style || "short" };
-    var m = document.getElementById("modal"); m.hidden = false;
-    m.innerHTML = '<form class="md-box" id="pf" role="dialog" aria-labelledby="pf-h">' +
-      '<h3 id="pf-h">2F ラウンジに入る</h3>' +
-      '<p class="note">名前と合言葉を入れて入室します。席に座るとカメラとマイクの許可を聞かれるので「許可」を選んでください。</p>' +
-      '<div class="field"><label for="pf-name">表示名</label><input id="pf-name" maxlength="12" required value="' + esc(draft.name) + '" placeholder="例: 山田" autocomplete="nickname"></div>' +
-      '<div class="field"><label for="pf-pass">合言葉</label><input id="pf-pass" type="password" required autocomplete="current-password"></div>' +
-      '<div class="field"><span class="lab">服の色</span><div class="swatches">' + COLORS.map(function (c) { return '<button type="button" class="sw" data-color="' + c + '" style="background:' + c + '" aria-label="色 ' + c + '" aria-pressed="' + (c === draft.color) + '"></button>'; }).join("") + "</div></div>" +
-      '<div class="field"><span class="lab">髪型</span><div class="styles">' + Object.keys(HAIRS).map(function (k) { return '<button type="button" data-style="' + k + '" aria-pressed="' + (k === draft.style) + '">' + HAIRS[k] + "</button>"; }).join("") + "</div></div>" +
-      '<div class="preview-face"><canvas id="pf-face" width="14" height="22"></canvas><span class="note">この見た目でフロアを歩きます</span></div>' +
-      '<p class="note" id="pf-err" role="alert" style="color:var(--bad)"></p>' +
-      '<div class="controls"><button class="btn" type="submit" id="pf-go">入室する</button></div></form>';
-    paintPreview();
+    openModal(
+      '<h3>2F ラウンジに入る</h3>' +
+      '<div class="prejoin"><div style="display:flex;flex-direction:column;gap:10px">' +
+        '<div class="pv"><video id="pv-video" class="mirror" autoplay playsinline muted hidden></video><span class="pvmsg" id="pv-msg">入る前に、カメラの映り方とマイクの音を確認できます。</span></div>' +
+        '<div class="field"><span class="lab">マイクの音量(話すと緑のバーが動きます)</span><div class="meter"><i id="pv-level"></i></div></div>' +
+        '<div class="row-end" style="justify-content:flex-start"><button type="button" class="btn ghost" data-action="pv-start"><i class="ti ti-camera" aria-hidden="true"></i> カメラとマイクを確認</button></div>' +
+        '<div class="field" hidden><label for="pv-cam">カメラ</label><select id="pv-cam"></select></div>' +
+        '<div class="field" hidden><label for="pv-mic">マイク</label><select id="pv-mic"></select></div>' +
+        '<div class="toggles"><button type="button" class="tg" id="tg-cam" data-action="tg-cam" aria-pressed="' + state.cam + '"></button><button type="button" class="tg" id="tg-mic" data-action="tg-mic" aria-pressed="' + state.mic + '"></button></div>' +
+      '</div><form id="pf" style="display:flex;flex-direction:column;gap:12px">' +
+        '<div class="field"><label for="pf-name">表示名</label><input id="pf-name" maxlength="12" required value="' + esc(draft.name) + '" placeholder="山田" autocomplete="nickname"></div>' +
+        '<div class="field"><label for="pf-pass">合言葉</label><input id="pf-pass" type="password" required autocomplete="current-password"></div>' +
+        '<div class="field"><span class="lab">服の色</span><div class="swatches">' + COLORS.map(function (c) { return '<button type="button" class="sw" data-color="' + c + '" style="background:' + c + '" aria-label="色 ' + c + '" aria-pressed="' + (c === draft.color) + '"></button>'; }).join("") + "</div></div>" +
+        '<div class="field"><span class="lab">髪型</span><div class="lookrow"><canvas id="pf-face" width="14" height="22"></canvas><div class="styles">' + Object.keys(HAIRS).map(function (k) { return '<button type="button" data-style="' + k + '" aria-pressed="' + (k === draft.style) + '">' + HAIRS[k] + "</button>"; }).join("") + "</div></div></div>" +
+        '<p class="err" id="pf-err" role="alert"></p>' +
+        '<div class="row-end"><button class="btn" type="submit" id="pf-go">入室する</button></div>' +
+      "</form></div>");
+    renderToggles(); paintPreview();
     var f = document.getElementById("pf");
-    f.addEventListener("click", function (e) {
+    modal.querySelector(".md-box").addEventListener("click", function (e) {
       var sw = e.target.closest("[data-color]"), st = e.target.closest("[data-style]");
-      if (sw) { draft.color = sw.getAttribute("data-color"); f.querySelectorAll("[data-color]").forEach(function (b) { b.setAttribute("aria-pressed", String(b === sw)); }); paintPreview(); }
-      if (st) { draft.style = st.getAttribute("data-style"); f.querySelectorAll("[data-style]").forEach(function (b) { b.setAttribute("aria-pressed", String(b === st)); }); paintPreview(); }
+      if (sw) { draft.color = sw.getAttribute("data-color"); modal.querySelectorAll("[data-color]").forEach(function (b) { b.setAttribute("aria-pressed", String(b === sw)); }); paintPreview(); }
+      if (st) { draft.style = st.getAttribute("data-style"); modal.querySelectorAll("[data-style]").forEach(function (b) { b.setAttribute("aria-pressed", String(b === st)); }); paintPreview(); }
     });
+    ["pv-cam", "pv-mic"].forEach(function (id) { document.getElementById(id).addEventListener("change", function (e) { state[id === "pv-cam" ? "camId" : "micId"] = e.target.value; startPreview(); }); });
     f.addEventListener("submit", function (e) {
       e.preventDefault();
       var name = document.getElementById("pf-name").value.trim().slice(0, 12), pass = document.getElementById("pf-pass").value;
-      if (!name || !pass) return;
+      var err = document.getElementById("pf-err");
+      if (!name) { err.textContent = "表示名を入れてください"; return; }
+      if (!pass) { err.textContent = "合言葉を入れてください"; return; }
       draft.name = name;
-      var go = document.getElementById("pf-go"), err = document.getElementById("pf-err");
+      var go = document.getElementById("pf-go");
       go.disabled = true; go.textContent = "接続中…"; err.textContent = "";
-      connect(draft, pass).then(function () { saveProfile(draft); closeModal(); }, function (x) {
+      stopPreview();
+      leaving = false;
+      connect(draft, pass).then(function () { store("sw2f-profile", draft); store("sw2f-media", { cam: state.cam, mic: state.mic }); closeModal(); }, function (x) {
         go.disabled = false; go.textContent = "入室する";
         err.textContent = (x && x.message) || "接続できませんでした。";
-        if (room) { try { room.disconnect(); } catch (e2) {} room = null; }
+        if (room) { leaving = true; try { room.disconnect(); } catch (e2) {} room = null; me = null; people = {}; }
       });
     });
     setTimeout(function () { var i = document.getElementById(draft.name ? "pf-pass" : "pf-name"); if (i) i.focus(); }, 30);
+  }
+  function renderToggles() {
+    var c = document.getElementById("tg-cam"), m = document.getElementById("tg-mic"); if (!c) return;
+    c.setAttribute("aria-pressed", String(state.cam)); c.innerHTML = '<i class="ti ' + (state.cam ? "ti-video" : "ti-video-off") + '" aria-hidden="true"></i>' + (state.cam ? "カメラ オンで入る" : "カメラ オフで入る");
+    m.setAttribute("aria-pressed", String(state.mic)); m.innerHTML = '<i class="ti ' + (state.mic ? "ti-microphone" : "ti-microphone-off") + '" aria-hidden="true"></i>' + (state.mic ? "マイク オンで入る" : "ミュートで入る");
   }
   function paintPreview() {
     var c = document.getElementById("pf-face"); if (!c) return;
     var g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 14, 22);
     drawSprite(g, 7, 22, normLook({ color: draft.color, style: draft.style }), "happy", { noShadow: true });
   }
-  function closeModal() { var m = document.getElementById("modal"); m.hidden = true; m.innerHTML = ""; }
+  function openExitConfirm() {
+    openModal('<h3>退出しますか?</h3><p class="note">2階のラウンジから出て、通話を終了します。</p><div class="row-end"><button class="btn ghost" data-action="modal-close">キャンセル</button><button class="btn danger" data-action="exit-yes"><i class="ti ti-door-exit" aria-hidden="true"></i> 退出する</button></div>', true);
+  }
+  function openGone(title, text) {
+    openModal("<h3>" + esc(title) + '</h3><p class="note">' + esc(text) + '</p><div class="row-end"><button class="btn" data-action="reenter">もう一度入る</button></div>', true);
+  }
 
   /* ----- events ----- */
   document.addEventListener("click", function (e) {
@@ -949,23 +1171,42 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
     if (a === "sit") {
       if (!me) { openEntry(); return; }
       var tid = b.getAttribute("data-table"), t = TBY[tid];
-      if (me.want === tid) { setNote("もう" + t.name + "に座っています。"); return; }
-      if (occupants(tid).length >= t.seats.length) { setNote(t.name + "は満席です。"); return; }
-      setTable(tid); setNote(t.name + "へ移動しています。");
+      if (me.want === tid) { toast("もう" + t.name + "に座っています"); return; }
+      if (occupants(tid).length >= t.seats.length) { toast(t.name + "は満席です"); return; }
+      setTable(tid); toast(t.name + "へ移動しています"); if (ui.drawer === "people") { ui.drawer = ""; renderControls(); }
     } else if (a === "person") {
       var p = people[b.getAttribute("data-id")]; if (!p || p.isMe || !me || !p.table || me.table === p.table) return;
-      if (occupants(p.table).length >= TBY[p.table].seats.length) { setNote(TBY[p.table].name + "は満席です。"); return; }
-      setTable(p.table); setNote(p.name + "さんのいる" + TBY[p.table].name + "へ移動しています。");
-    } else if (a === "leave") { if (me) { setTable(""); setNote("席を立ちました。会話からは外れています。"); } }
-    else if (a === "mic") { state.mic = !state.mic; syncMedia(); renderControls(); }
-    else if (a === "cam") { state.cam = !state.cam; syncMedia(); renderControls(); }
-    else if (a === "audio") { if (room) room.startAudio().then(function () { document.getElementById("audio-btn").hidden = true; }, function () {}); }
-    else if (a === "exit") {
-      if (room) room.disconnect();
-      room = null; me = null; people = {}; Object.keys(charEls).forEach(function (k) { charEls[k].remove(); }); charEls = {};
-      document.getElementById("audio-sink").innerHTML = "";
-      setNote("退室しました。"); renderUI(); openEntry();
+      if (occupants(p.table).length >= TBY[p.table].seats.length) { toast(TBY[p.table].name + "は満席です"); return; }
+      setTable(p.table); toast(p.name + "さんのいる" + TBY[p.table].name + "へ移動しています");
+    } else if (a === "leave") { if (me) { setTable(""); toast("席を立ちました。会話からは外れています"); } }
+    else if (a === "mic") { state.mic = !state.mic; syncMedia(); renderControls(); if (!me || !me.table) toast(state.mic ? "座るとマイクがオンになります" : "座ってもマイクはオフのままです"); }
+    else if (a === "cam") { state.cam = !state.cam; syncMedia(); renderControls(); if (!me || !me.table) toast(state.cam ? "座るとカメラがオンになります" : "座ってもカメラはオフのままです"); }
+    else if (a === "share") { if (!me) return; toggleShare(); }
+    else if (a === "chat" || a === "people") { ui.drawer = ui.drawer === a ? "" : a; if (ui.drawer === "chat") { ui.unread = 0; renderChat(); setTimeout(function () { var i = document.getElementById("chat-input"); if (i && !i.disabled) i.focus(); }, 20); } renderControls(); }
+    else if (a === "big") {
+      if (!ui.big && (!me || !me.table)) { toast("テーブルに座ると、相手の映像を大きく表示できます"); return; }
+      ui.big = !ui.big; renderRail(); renderBig(); renderControls();
     }
+    else if (a === "exit") { if (!me) { openEntry(); return; } openExitConfirm(); }
+    else if (a === "exit-yes") {
+      leaving = true;
+      if (room) room.disconnect();
+      resetRoom(); closeModal();
+      openGone("退出しました", "おつかれさまでした。もう一度入るときは下のボタンからどうぞ。");
+    }
+    else if (a === "reenter") { closeModal(); openEntry(); }
+    else if (a === "modal-close") closeModal();
+    else if (a === "pv-start") startPreview();
+    else if (a === "tg-cam") { state.cam = !state.cam; renderToggles(); }
+    else if (a === "tg-mic") { state.mic = !state.mic; renderToggles(); }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      if (!modal.hidden && me) { closeModal(); return; }
+      if (ui.drawer) { ui.drawer = ""; renderControls(); return; }
+      if (ui.big) { ui.big = false; renderRail(); renderBig(); renderControls(); }
+    }
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches(".vcard.share")) { e.preventDefault(); e.target.click(); }
   });
   document.getElementById("chat-form").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -973,16 +1214,17 @@ h1 small{font-size:16px;color:var(--muted);margin-left:10px}
     if (!v || !me || !me.table || !room) return;
     post(me.table, me, v); say(me, v.length > 14 ? v.slice(0, 14) + "…" : v); i.value = "";
     var dest = occupants(me.table).filter(function (p) { return !p.isMe; }).map(function (p) { return p.id; });
-    if (dest.length) room.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ t: me.table, text: v })), { reliable: true, topic: "chat", destinationIdentities: dest }).catch(function () { setNote("メッセージを送れませんでした。"); });
+    if (dest.length) lp().publishData(new TextEncoder().encode(JSON.stringify({ t: me.table, text: v })), { reliable: true, topic: "chat", destinationIdentities: dest }).catch(function () { toast("メッセージを送れませんでした"); });
   });
 
   function tickClock() { var d = new Date(); document.getElementById("clock").textContent = (d.getMonth() + 1) + "月" + d.getDate() + "日 " + hhmm(d); }
   tickClock(); setInterval(tickClock, 15000);
-  setInterval(function () { renderPlates(); renderSummary(); renderRoster(); }, 3000);
+  setInterval(function () { renderPlates(); renderRoster(); document.getElementById("count").textContent = all().length; }, 3000);
 
-  renderUI();
+  var savedMedia = load("sw2f-media"); if (savedMedia) { state.cam = savedMedia.cam !== false; state.mic = savedMedia.mic !== false; }
+  fit(); renderUI();
   requestAnimationFrame(frame);
-  if (!LK) setNote("通話ライブラリを読み込めませんでした。ネット接続を確認して、ページを再読み込みしてください。");
+  if (!LK) openGone("読み込みに失敗しました", "通話の仕組みを読み込めませんでした。ネット接続を確認して、ページを再読み込みしてください。");
   else openEntry();
 })();
 </script>
