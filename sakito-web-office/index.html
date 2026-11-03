@@ -203,7 +203,7 @@ video.mirror{transform:scaleX(-1)}
   <div class="main" id="main">
     <div class="stage-area" id="stage-area">
       <div class="stage" id="stage">
-        <canvas id="cv" width="448" height="240" role="img" aria-label="Sakito Webオフィス1階のラウンジ。丸テーブルが6つとソファ席、個室ブース、エレベーターホールがあり、テーブルをクリックするとそこに座れる"></canvas>
+        <canvas id="cv" width="448" height="240" role="img" aria-label="Sakito Webオフィス1階のラウンジ。丸テーブルが6つとソファ席、個室ブース、3人用の喫煙所、エレベーターホールがあり、テーブルをクリックするとそこに座れる"></canvas>
         <div class="ov" id="ov"></div>
       </div>
     </div>
@@ -308,7 +308,13 @@ video.mirror{transform:scaleX(-1)}
       { x: 356, y: 197, kind: "back", via: [[356, LANE], [356, 190], [356, 197]] },
       { x: 356, y: 216, kind: "stool", via: [[356, LANE], [356, 186], [342, 186], [342, 216], [356, 216]] }
     ] };
-  TABLES.push(SOFA); TABLES.push(BOOTH);
+  var SMOKE = { id: "smoke", name: "喫煙所", cx: 310, cy: 198, rug: "#b9bec6", box: [288, 154, 44, 86], plate: [310, 234],
+    seats: [
+      { x: 299, y: 190, kind: "stand", via: [[310, LANE], [310, 174], [299, 174], [299, 190]] },
+      { x: 321, y: 190, kind: "stand", via: [[310, LANE], [310, 174], [321, 174], [321, 190]] },
+      { x: 310, y: 220, kind: "stand", via: [[310, LANE], [310, 174], [296, 174], [296, 220], [310, 220]] }
+    ] };
+  TABLES.push(SOFA); TABLES.push(BOOTH); TABLES.push(SMOKE);
   var TBY = {}; TABLES.forEach(function (t) { TBY[t.id] = t; });
   var ENTRY = { x: 416, y: 42, via: [[416, LANE], [416, 42]] };
   var STAND = { x: 318, y: 128, via: [[318, LANE], [318, 128]] };
@@ -328,7 +334,7 @@ video.mirror{transform:scaleX(-1)}
     }
     // round rugs under each table
     TABLES.forEach(function (t) {
-      if (t.id === "sofa" || t.id === "booth") return;
+      if (t.id === "sofa" || t.id === "booth" || t.id === "smoke") return;
       var rx = 40, ry = 30, cx = t.cx, cy = t.cy + 6;
       for (var dy = -ry; dy <= ry; dy++) {
         var w = Math.round(rx * Math.sqrt(1 - (dy / ry) * (dy / ry)));
@@ -341,6 +347,8 @@ video.mirror{transform:scaleX(-1)}
     for (var sy = 46; sy < 98; sy += 6) B("#e0cdb6", 298, sy, 74, 1);
     // cafe tiles around counter
     for (var ty = 124; ty < 160; ty += 8) for (var tx = 290; tx < 336; tx += 8) B(((tx + ty) / 8) % 2 ? "#ece6da" : "#e2dbcc", tx, ty, 8, 8);
+    // smoking area floor
+    for (var sy3 = 156; sy3 < 238; sy3 += 6) for (var sx3 = 290; sx3 < 330; sx3 += 6) B(((sx3 + sy3) / 6) % 2 ? "#b9bec6" : "#aeb4bd", sx3, sy3, Math.min(6, 330 - sx3), Math.min(6, 238 - sy3));
     // elevator hall (right wing, x 384-448)
     for (var hy = 30; hy < H; hy += 8) for (var hx = 388; hx < W; hx += 8) { B(((hx + hy) / 8) % 2 ? "#e2e6eb" : "#d3d9e0", hx, hy, 8, 8); B("#c3cad3", hx, hy + 7, 8, 1); }
     B("#5a6270", 400, 32, 32, 9); B("#6a7380", 402, 33, 28, 7);
@@ -486,6 +494,7 @@ video.mirror{transform:scaleX(-1)}
     if (o.wave) { Q(shirt, L + 1, T + 11, 2, 5); Q(shirt, L + 11, T + 7, 2, 4); Q(skin, L + 1, T + 16, 2, 1); Q(skin, L + 11, T + 5, 2, 2); }
     else { Q(shirt, L + 1, T + 11, 2, 5); Q(shirt, L + 11, T + 11, 2, 5); Q(skin, L + 1, T + 16, 2, 1); Q(skin, L + 11, T + 16, 2, 1); }
     if (o.mug) { Q("#ffffff", L + 11, T + 14, 3, 3); Q("#8a5a3a", L + 11, T + 14, 3, 1); }
+    if (o.cig) { Q("#f4f4f4", L + 12, T + 15, 3, 1); Q("#ff7a30", L + 15, T + 15, 1, 1); }
     Q(skin, L + 3, T + 3, 8, 7); Q(skin, L + 2, T + 5, 1, 2); Q(skin, L + 11, T + 5, 1, 2);
     Q(hair, L + 3, T, 8, 1); Q(hair, L + 2, T + 1, 10, 3); Q(hair, L + 3, T + 3, 8, 1);
     if (look.style === "bob") { Q(hair, L + 2, T + 3, 1, 6); Q(hair, L + 11, T + 3, 1, 6); Q(hair, L + 3, T + 4, 1, 1); }
@@ -555,6 +564,22 @@ video.mirror{transform:scaleX(-1)}
     P("#3f8f4f", x - 5 - s, y - 11 - s, 10 + 2 * s, 6); P("#4fa85f", x - 3 + sw, y - 14 - s * 2, 6, 4); P("#5fbf6f", x - 1 + sw, y - 16 - s * 2, 3, 2); P("#3f8f4f", x - 6 - s, y - 9, 2, 2); P("#3f8f4f", x + 4 + s, y - 9, 2, 2);
   }
   function drawBoothBack() { ctx.fillStyle = "rgba(170,220,245,.45)"; ctx.fillRect(334, 149, 16, 2); ctx.fillRect(362, 149, 18, 2); P("#9fb4c4", 334, 148, 2, 4); P("#9fb4c4", 348, 148, 2, 4); P("#9fb4c4", 362, 148, 2, 4); P("#9fb4c4", 378, 148, 2, 4); }
+  function drawSmokeBack() {
+    ctx.fillStyle = "rgba(170,220,245,.45)"; ctx.fillRect(290, 155, 14, 2); ctx.fillRect(316, 155, 14, 2);
+    P("#9fb4c4", 289, 154, 2, 4); P("#9fb4c4", 303, 154, 2, 4); P("#9fb4c4", 316, 154, 2, 4); P("#9fb4c4", 329, 154, 2, 4);
+    P("#d8dde4", 292, 158, 9, 13); P("#b8c0ca", 292, 169, 9, 2); for (var i = 0; i < 4; i++) P("#8c96a3", 293, 160 + i * 2, 7, 1); P("#3caa66", 299, 159, 1, 1);
+  }
+  function drawSmokeSides() { ctx.fillStyle = "rgba(170,220,245,.35)"; ctx.fillRect(289, 156, 2, 82); ctx.fillRect(329, 156, 2, 82); P("rgba(255,255,255,.7)", 290, 162, 1, 64); }
+  function drawAshtray() { P("#6b7280", 309, 196, 2, 10); P("#4b5260", 305, 205, 10, 2); P("#9aa3b0", 305, 194, 10, 3); P("#5b6270", 306, 195, 8, 1); }
+  function drawSmoke(x, y) {
+    if (REDUCED) return;
+    var f = tick % 24;
+    for (var i = 0; i < 3; i++) {
+      var k = (f + i * 8) % 24, a = (1 - k / 24) * 0.7;
+      ctx.fillStyle = "rgba(150,156,166," + a.toFixed(2) + ")";
+      ctx.fillRect(Math.round(x + 6 + Math.sin((k + i) / 3) * 2), Math.round(y - 16 - k), 2 + (k > 12 ? 1 : 0), 2);
+    }
+  }
   function drawBoothSides() { ctx.fillStyle = "rgba(170,220,245,.35)"; ctx.fillRect(333, 150, 2, 88); ctx.fillRect(379, 150, 2, 88); P("rgba(255,255,255,.7)", 334, 156, 1, 70); P("rgba(255,255,255,.7)", 380, 156, 1, 70); }
   function drawBoothTable() {
     P("rgba(0,0,0,.12)", 346, 206, 20, 2);
@@ -564,7 +589,7 @@ video.mirror{transform:scaleX(-1)}
 
   /* ----- table plates sit below each table so faces above heads stay clear ----- */
   TABLES.forEach(function (t) { if (t.id !== "sofa" && t.id !== "booth") t.plate = [t.cx, t.cy + 31]; });
-  SOFA.plate = [318, 106]; BOOTH.plate = [357, 234];
+  SOFA.plate = [318, 106]; BOOTH.plate = [357, 234]; SMOKE.plate = [310, 234];
 
   /* ----- people & LiveKit room ----- */
   var COLORS = ["#2f6fd6", "#d0603a", "#3caa66", "#8a5cd0", "#e0a020", "#d04a7a", "#1d3a6e", "#4aa3e0"];
@@ -794,7 +819,7 @@ video.mirror{transform:scaleX(-1)}
   /* ----- render loop ----- */
   var STATIC = [
     { b: 46, d: drawSofaBack }, { b: 63, d: drawSofaSeat }, { b: 86, d: drawLowTable }, { b: 92, d: drawBeanbag },
-    { b: 138, d: drawCounter }, { b: 150, d: drawBoothBack }, { b: 203, d: drawBoothTable }, { b: 239, d: drawBoothSides },
+    { b: 138, d: drawCounter }, { b: 150, d: drawBoothBack }, { b: 155, d: drawSmokeBack }, { b: 206, d: drawAshtray }, { b: 239, d: drawSmokeSides }, { b: 203, d: drawBoothTable }, { b: 239, d: drawBoothSides },
     { b: 44, d: function () { drawPlant(12, 44, true); } },
     { b: 44, d: function () { drawPlant(282, 44, true); } },
     { b: 112, d: function () { drawPlant(106, 112, false); } },
@@ -802,12 +827,11 @@ video.mirror{transform:scaleX(-1)}
     { b: 128, d: function () { drawPlant(372, 128, true); } },
     { b: 236, d: function () { drawPlant(12, 236, true); } },
     { b: 236, d: function () { drawPlant(106, 236, false); } },
-    { b: 236, d: function () { drawPlant(194, 236, false); } },
-    { b: 236, d: function () { drawPlant(300, 236, true); } }
+    { b: 236, d: function () { drawPlant(194, 236, false); } }
   ];
   TABLES.forEach(function (t) {
     if (t.id === "sofa") return;
-    if (t.id !== "booth") STATIC.push({ b: t.cy + 9, d: function () { drawRoundTable(t); } });
+    if (t.id !== "booth" && t.id !== "smoke") STATIC.push({ b: t.cy + 9, d: function () { drawRoundTable(t); } });
     t.seats.forEach(function (s) {
       if (s.kind === "back") STATIC.push({ b: s.y - 0.5, d: function () { chairBack(s.x, s.y); } });
       else STATIC.push({ b: s.y - 0.5, d: function () { stool(s.x, s.y); } });
@@ -835,10 +859,12 @@ video.mirror{transform:scaleX(-1)}
     Object.keys(people).forEach(function (k) {
       var p = people[k]; if (!visible(p)) return;
       items.push({ b: p.y, d: function () {
-        var moving = p.path.length > 0, sitting = !moving && !!p.table;
+        var moving = p.path.length > 0, standSeat = !!p.table && TBY[p.table].seats[p.seat] && TBY[p.table].seats[p.seat].kind === "stand";
+        var sitting = !moving && !!p.table && !standSeat, smoking = !moving && standSeat;
         var talking = performance.now() < p.speakUntil;
         if (p.wave > 0) p.wave--;
-        drawSprite(ctx, p.x, p.y, p.look, talking ? "talk" : (p.wave > 0 ? "happy" : "normal"), { frame: moving ? (Math.floor(tick / 2) % 2) + 1 : 0, sitting: sitting, wave: p.wave > 0 && tick % 4 < 2, mug: !moving && p.spot === STAND });
+        drawSprite(ctx, p.x, p.y, p.look, talking ? "talk" : (p.wave > 0 ? "happy" : "normal"), { frame: moving ? (Math.floor(tick / 2) % 2) + 1 : 0, sitting: sitting, wave: p.wave > 0 && tick % 4 < 2, mug: !moving && p.spot === STAND, cig: smoking });
+        if (smoking) drawSmoke(p.x + 2, p.y);
       } });
     });
     items.sort(function (a, b) { return a.b - b.b; });
@@ -870,7 +896,7 @@ video.mirror{transform:scaleX(-1)}
   (function buildStatic() {
     var s = document.createElement("div"); s.className = "sign"; s.textContent = "1F LOUNGE"; place(s, 192, 15); ov.appendChild(s);
     TABLES.forEach(function (t) {
-      var b = document.createElement("button"); b.className = "hot" + (t.id === "booth" || t.id === "sofa" ? " sq" : ""); b.setAttribute("data-action", "sit"); b.setAttribute("data-table", t.id);
+      var b = document.createElement("button"); b.className = "hot" + (t.id === "booth" || t.id === "sofa" || t.id === "smoke" ? " sq" : ""); b.setAttribute("data-action", "sit"); b.setAttribute("data-table", t.id);
       b.setAttribute("aria-label", t.name + "に座る"); b.innerHTML = '<span class="cap">ここに座る</span>';
       box(b, t.box[0], t.box[1], t.box[2], t.box[3]); ov.appendChild(b);
       var pl = document.createElement("div"); pl.className = "plate"; place(pl, t.plate[0], t.plate[1]); ov.appendChild(pl); plates[t.id] = pl;
