@@ -197,7 +197,7 @@ video.mirror{transform:scaleX(-1)}
     <div class="meta">
       <span>いる人 <b id="count">0</b></span>
       <span class="clk" id="clock"></span>
-      <a href="https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR">2F(社内専用)</a>
+      <a href="https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR" id="to-2f" hidden>2F(社内専用)</a>
     </div>
   </header>
   <div class="main" id="main">
@@ -247,6 +247,16 @@ video.mirror{transform:scaleX(-1)}
 <script>
 (function () {
   "use strict";
+  /* staff-only entrance to 2F: open the page once as .../#staff on your own device (#guest turns it off) */
+  var IS_STAFF = false;
+  try {
+    if (location.hash === "#staff") localStorage.setItem("sw-staff", "1");
+    if (location.hash === "#guest") localStorage.removeItem("sw-staff");
+    IS_STAFF = localStorage.getItem("sw-staff") === "1";
+    if (location.hash === "#staff" || location.hash === "#guest") history.replaceState(null, "", location.pathname + location.search);
+  } catch (e) {}
+  if (IS_STAFF) document.getElementById("to-2f").hidden = false;
+  window.addEventListener("hashchange", function () { if (location.hash === "#staff" || location.hash === "#guest") { try { if (location.hash === "#staff") localStorage.setItem("sw-staff", "1"); else localStorage.removeItem("sw-staff"); } catch (e) {} location.replace(location.pathname + location.search); } });
   var W = 448, H = 240, LANE = 118, FLOOR = 1;
   var REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
@@ -865,8 +875,15 @@ video.mirror{transform:scaleX(-1)}
       box(b, t.box[0], t.box[1], t.box[2], t.box[3]); ov.appendChild(b);
       var pl = document.createElement("div"); pl.className = "plate"; place(pl, t.plate[0], t.plate[1]); ov.appendChild(pl); plates[t.id] = pl;
     });
-    var a = document.createElement("a"); a.className = "hot sq"; a.href = "https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR"; a.setAttribute("aria-label", "エレベーターで2階のAI社員オフィスへ(社内専用)");
-    a.innerHTML = '<span class="cap">2F(社内専用)へ</span>'; box(a, 396, 0, 46, 34); ov.appendChild(a); hookElevator(a);
+    var a;
+    if (IS_STAFF) {
+      a = document.createElement("a"); a.className = "hot sq"; a.href = "https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR"; a.setAttribute("aria-label", "エレベーターで2階のAI社員オフィスへ(社内専用)");
+      a.innerHTML = '<span class="cap">2F(社内専用)へ</span>'; hookElevator(a);
+    } else {
+      a = document.createElement("button"); a.className = "hot sq"; a.setAttribute("data-action", "lift-locked"); a.setAttribute("aria-label", "エレベーター(関係者専用)");
+      a.innerHTML = '<span class="cap">関係者専用</span>';
+    }
+    box(a, 396, 0, 46, 34); ov.appendChild(a);
     var lb = document.createElement("div"); lb.className = "plate"; lb.textContent = "エレベーターホール"; place(lb, 418, 96); ov.appendChild(lb);
   })();
   function renderPlates() {
@@ -1195,6 +1212,7 @@ video.mirror{transform:scaleX(-1)}
       openGone("退出しました", "おつかれさまでした。もう一度入るときは下のボタンからどうぞ。");
     }
     else if (a === "reenter") { closeModal(); openEntry(); }
+    else if (a === "lift-locked") toast("このエレベーターは関係者専用です");
     else if (a === "modal-close") closeModal();
     else if (a === "pv-start") startPreview();
     else if (a === "tg-cam") { state.cam = !state.cam; renderToggles(); }
