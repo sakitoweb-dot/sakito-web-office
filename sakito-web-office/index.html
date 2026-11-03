@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sakito Web オフィス 2F ラウンジ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* layout: 2F lounge of the Sakito Web office (448x240 pixel canvas, HTML overlays, panels below). Remo-style: one LiveKit room for the floor; each person's "table" attribute decides who hears whom. */
+:root{
+  --bg:#e8eef2; --surface:#ffffff; --ink:#1d2433; --muted:#5b6476; --line:#cfd6df;
+  --accent:#2f6fd6; --accent-soft:#e3edfc; --pix:#1d2433;
+  --warn:#a35a00; --warn-soft:#fdf0d8; --good:#2b6f48; --good-soft:#dff1e6; --bad:#a3312b; --bad-soft:#fae3e1;
+  --font-pixel:"DotGothic16","Hiragino Kaku Gothic ProN",monospace;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.6}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1160px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.brand{font-family:var(--font-pixel);font-size:14px;color:var(--accent);margin:0;letter-spacing:.08em}
+h1{font-family:var(--font-pixel);font-weight:400;font-size:30px;margin:0;line-height:1.2}
+h1 small{font-size:16px;color:var(--muted);margin-left:10px}
+.clock{font-family:var(--font-pixel);font-size:14px;color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.summary{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:var(--surface);border:2px solid var(--pix);font-size:13px;box-shadow:2px 2px 0 var(--pix)}
+.chip b{font-family:var(--font-pixel);font-weight:400;font-size:15px;font-variant-numeric:tabular-nums}
+.chip.busy{background:var(--accent-soft);color:var(--accent)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.pbtn{font-family:var(--font-pixel);font-size:14px;padding:6px 14px;border:2px solid var(--pix);background:var(--surface);box-shadow:3px 3px 0 var(--pix);text-decoration:none;display:inline-block}
+.pbtn.primary{background:var(--accent);color:#fff}
+.pbtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--pix)}
+
+/* ---------- stage ---------- */
+.stage-scroll{overflow-x:auto;border:3px solid var(--pix);box-shadow:5px 5px 0 var(--pix);background:#cfe6f6}
+.stage{position:relative;width:100%;min-width:910px;aspect-ratio:448/240}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.ov{position:absolute;inset:0;pointer-events:none}
+.ov > *{pointer-events:auto}
+.sign{position:absolute;transform:translate(-50%,-50%);font-family:var(--font-pixel);font-size:13px;color:#fff;background:var(--accent);padding:1px 10px;white-space:nowrap;pointer-events:none;border:2px solid var(--pix)}
+.plate{position:absolute;transform:translate(-50%,-50%);font-family:var(--font-pixel);font-size:10.5px;background:rgba(255,255,255,.88);color:var(--ink);border:1px solid rgba(29,36,51,.35);padding:0 6px;white-space:nowrap;line-height:1.45;pointer-events:none}
+.plate .n{color:var(--muted);margin-left:5px;font-variant-numeric:tabular-nums}
+.plate.mine{background:var(--accent);color:#fff;border-color:var(--pix)}
+.plate.mine .n{color:#dce8ff}
+.plate.full .n{color:var(--bad)}
+.hot{position:absolute;background:transparent;border:2px solid transparent;padding:0;display:block}
+.hot:hover,.hot:focus-visible{border-color:var(--accent);background:rgba(47,111,214,.08)}
+.hot .cap{position:absolute;left:50%;top:100%;transform:translate(-50%,3px);font-family:var(--font-pixel);font-size:10.5px;background:var(--pix);color:#fff;padding:0 6px;white-space:nowrap;display:none}
+.hot:hover .cap,.hot:focus-visible .cap{display:block}
+.char{position:absolute;background:transparent;border:none;padding:0;z-index:2}
+.char:hover{outline:2px dashed var(--accent);outline-offset:2px}
+.char .nm{position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);font-family:var(--font-pixel);font-size:9.5px;background:rgba(29,36,51,.82);color:#fff;padding:0 4px;white-space:nowrap;pointer-events:none;line-height:1.45}
+.char .nm{display:none}
+.char:hover .nm,.char:focus-visible .nm,.char.me .nm{display:block}
+.char.me .nm{background:var(--accent)}
+.bubble{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);font-family:var(--font-pixel);font-size:12px;background:#fff;color:var(--ink);border:2px solid var(--pix);padding:1px 8px;white-space:nowrap;pointer-events:none;box-shadow:2px 2px 0 rgba(29,36,51,.35);max-width:none}
+.bubble::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--pix)}
+.bubble:empty{display:none}
+.talk{position:absolute;top:-6px;right:-8px;width:8px;height:8px;background:#3caa66;border:2px solid var(--pix);display:none;pointer-events:none}
+.char.speaking .talk{display:block;animation:blink .6s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+
+/* ---------- panels ---------- */
+.panels{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:16px}
+.panel{background:var(--surface);border:2px solid var(--pix);box-shadow:4px 4px 0 var(--pix);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.panel h2{font-family:var(--font-pixel);font-weight:400;font-size:17px;margin:0;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.panel h2 span{font-size:13px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{position:relative;aspect-ratio:4/3;background:#2b3042;border:2px solid var(--pix);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tile canvas{width:42%;height:auto;image-rendering:pixelated}
+.tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#2b3042}
+.tile video.mirror{transform:scaleX(-1)}
+.tile.speaking{outline:3px solid #3caa66;outline-offset:-3px}
+.tile .tn{position:absolute;left:4px;bottom:4px;font-size:11.5px;background:rgba(0,0,0,.55);color:#fff;padding:0 6px;max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .mic{position:absolute;right:4px;top:4px;font-size:10.5px;font-family:var(--font-pixel);background:rgba(0,0,0,.55);color:#fff;padding:0 5px}
+.tile .mic.off{background:var(--bad);color:#fff}
+.tile.empty{background:#e4e9ef;border-style:dashed;border-color:#aab3be}
+.tile.empty span{font-size:12px;color:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:2px solid var(--pix);padding:6px 14px;background:var(--accent);color:#fff;font-weight:500;font-size:14px;white-space:nowrap}
+.btn.ghost{background:var(--surface);color:var(--ink)}
+.btn[aria-pressed="false"]{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.btn.ghost[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.note{font-size:12.5px;color:var(--muted);margin:0}
+.chat{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:260px;min-height:120px;overflow-y:auto}
+.chat li{font-size:13.5px;overflow-wrap:anywhere}
+.chat li b{font-weight:700;margin-right:6px}
+.chat li time{font-size:11.5px;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums}
+.chat li.sys{color:var(--muted);font-size:12.5px}
+.add{display:flex;gap:8px}
+.add input,.field input{flex:1;min-width:0;padding:7px 10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+.roster{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.roster li{border:2px solid var(--pix);background:var(--bg);padding:6px 10px;display:flex;flex-direction:column;gap:4px}
+.roster li.mine{background:var(--accent-soft)}
+.roster .rh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.roster .rh b{font-family:var(--font-pixel);font-weight:400;font-size:14px}
+.roster .who{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.mini{font-size:12px;padding:1px 10px;border:1.5px solid var(--pix);background:var(--surface)}
+.empty-msg{font-size:13px;color:var(--muted);margin:0}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(10,15,25,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+.modal[hidden]{display:none}
+.md-box{background:var(--surface);border:3px solid var(--pix);box-shadow:6px 6px 0 var(--pix);width:min(460px,100%);max-height:100%;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.md-box h3{font-family:var(--font-pixel);font-weight:400;font-size:20px;margin:0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label,.field .lab{font-size:12.5px;color:var(--muted)}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.sw{width:30px;height:30px;border:2px solid var(--pix);padding:0}
+.sw[aria-pressed="true"]{outline:3px solid var(--accent);outline-offset:2px}
+.styles{display:flex;flex-wrap:wrap;gap:6px}
+.styles button{border:1.5px solid var(--pix);background:var(--surface);padding:2px 12px;font-size:13px}
+.styles button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.preview-face{display:flex;align-items:center;gap:12px}
+.preview-face canvas{width:42px;height:66px;image-rendering:pixelated;border:2px solid var(--pix);background:#f4f8fc}
+
+@media (max-width:980px){.panels{grid-template-columns:1fr 1fr}.panels .panel:first-child{grid-column:1 / -1}}
+@media (max-width:720px){
+  .wrap{padding:14px 10px 40px;gap:12px}
+  .panels{grid-template-columns:1fr}
+  .stage{min-width:0}
+  .stage-scroll{box-shadow:3px 3px 0 var(--pix)}
+  .plate,.sign,.hot .cap,.char .nm{display:none!important}
+  .bubble{font-size:9.5px;padding:0 4px;bottom:calc(100% + 3px)}
+  .pbtn{font-size:12.5px;padding:4px 9px;box-shadow:2px 2px 0 var(--pix)}
+  .chip{font-size:11.5px;padding:3px 8px;box-shadow:1px 1px 0 var(--pix)}
+  .toolbar{flex-direction:column;align-items:stretch}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .clock{font-size:12px}
+}
+@media (max-width:600px){h1{font-size:24px}}
+@media (prefers-reduced-motion: reduce){.char.speaking .talk{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="brand">SAKITO WEB</p>
+      <h1>バーチャルオフィス<small>2F ラウンジ</small></h1>
+    </div>
+    <div class="clock" id="clock"></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="summary" id="summary"></div>
+    <div class="actions">
+      <a class="pbtn" href="https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR">1F(社内専用)へ</a>
+      <button class="pbtn" data-action="exit">退室</button>
+    </div>
+  </div>
+
+  <div class="stage-scroll">
+    <div class="stage" id="stage">
+      <canvas id="cv" width="448" height="240" role="img" aria-label="Sakito Webオフィス2階のラウンジ。丸テーブルが6つとソファ席、個室ブース、エレベーターホールがあり、テーブルをクリックするとそこに座れる"></canvas>
+      <div class="ov" id="ov"></div>
+    </div>
+  </div>
+
+  <div class="panels">
+    <section class="panel" aria-labelledby="h-table">
+      <h2 id="h-table"><b id="table-title" style="font-weight:400">テーブルに座っていません</b><span id="table-count"></span></h2>
+      <div class="tiles" id="tiles"></div>
+      <div class="controls">
+        <button class="btn ghost" data-action="mic" id="mic-btn" aria-pressed="true">マイク オン</button>
+        <button class="btn ghost" data-action="cam" id="cam-btn" aria-pressed="true">カメラ オン</button>
+        <button class="btn ghost" data-action="leave" id="leave-btn">席を立つ</button>
+        <button class="btn" data-action="audio" id="audio-btn" hidden>音声を有効にする</button>
+      </div>
+      <p class="note">同じテーブルに座っている人とだけ、声と映像がつながります。席を立つとカメラとマイクは自動で止まります。</p>
+    </section>
+    <section class="panel" aria-labelledby="h-chat">
+      <h2 id="h-chat">テーブルチャット<span id="chat-where"></span></h2>
+      <ul class="chat" id="chat" aria-live="polite"></ul>
+      <form class="add" id="chat-form"><input id="chat-input" aria-label="テーブルにメッセージを送る" placeholder="同じテーブルの人に送る" autocomplete="off"><button class="btn" type="submit">送信</button></form>
+    </section>
+    <section class="panel" aria-labelledby="h-roster">
+      <h2 id="h-roster">フロアの人</h2>
+      <ul class="roster" id="roster"></ul>
+    </section>
+  </div>
+
+  <p class="note" id="note">入室すると、エレベーターで2階に上がってきます。テーブルをクリックするとそこへ歩いて座り、同じテーブルの人とだけ会話できます。</p>
+</div>
+
+<div class="modal" id="modal" hidden></div>
+<div id="audio-sink" hidden></div>
+<script src="https://cdn.jsdelivr.net/npm/livekit-client@2.23.0/dist/livekit-client.umd.js"></script>
+
+<script>
+(function () {
+  "use strict";
+  var W = 448, H = 240, LANE = 118, FLOOR = 2;
+  var REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  function P(c, x, y, w, h) { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); }
+  function shade(hex, amt) {
+    var n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    function f(v) { return Math.max(0, Math.min(255, Math.round(amt < 0 ? v * (1 + amt) : v + (255 - v) * amt))); }
+    return "rgb(" + f(r) + "," + f(g) + "," + f(b) + ")";
+  }
+  function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function hhmm(d) { return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+
+  /* ----- tables ----- */
+  var RUGS = ["#bfd0d8", "#d9c7e6", "#f0d6b0", "#c8e0c4", "#f2c9c4", "#cdd6ee"];
+  var TABLES = [
+    { id: "t1", name: "打ち合わせA", cx: 62, cy: 68 },
+    { id: "t2", name: "打ち合わせB", cx: 150, cy: 68 },
+    { id: "t3", name: "雑談", cx: 238, cy: 68 },
+    { id: "t4", name: "もくもく作業", cx: 62, cy: 170 },
+    { id: "t5", name: "相談", cx: 150, cy: 170 },
+    { id: "t6", name: "フリー", cx: 238, cy: 170 }
+  ];
+  TABLES.forEach(function (t, i) {
+    var cx = t.cx, cy = t.cy, L = cx - 34, R = cx + 34, by = cy + 20;
+    t.rug = RUGS[i];
+    t.seats = [
+      { x: cx - 8, y: cy - 1, kind: "back", via: [[L, LANE], [L, cy - 1], [cx - 8, cy - 1]] },
+      { x: cx + 8, y: cy - 1, kind: "back", via: [[R, LANE], [R, cy - 1], [cx + 8, cy - 1]] },
+      { x: cx - 24, y: cy + 6, kind: "stool", via: [[L, LANE], [L, cy + 6], [cx - 24, cy + 6]] },
+      { x: cx + 24, y: cy + 6, kind: "stool", via: [[R, LANE], [R, cy + 6], [cx + 24, cy + 6]] },
+      { x: cx - 8, y: by, kind: "stool", via: by < LANE ? [[cx - 8, LANE], [cx - 8, by]] : [[L, LANE], [L, by], [cx - 8, by]] },
+      { x: cx + 8, y: by, kind: "stool", via: by < LANE ? [[cx + 8, LANE], [cx + 8, by]] : [[R, LANE], [R, by], [cx + 8, by]] }
+    ];
+    t.box = [cx - 36, cy - 24, 72, 50];
+    t.plate = [cx, cy - 30];
+  });
+  var SOFA = { id: "sofa", name: "ソファ席", cx: 333, cy: 70, rug: "#e4d3bf", box: [292, 36, 86, 64], plate: [333, 34],
+    seats: [
+      { x: 312, y: 60, kind: "sofa", via: [[300, LANE], [300, 66], [312, 66], [312, 60]] },
+      { x: 328, y: 60, kind: "sofa", via: [[300, LANE], [300, 66], [328, 66], [328, 60]] },
+      { x: 344, y: 60, kind: "sofa", via: [[366, LANE], [366, 66], [344, 66], [344, 60]] },
+      { x: 365, y: 90, kind: "bean", via: [[366, LANE], [366, 90]] }
+    ] };
+  var BOOTH = { id: "booth", name: "個室ブース", cx: 356, cy: 199, rug: "#b3c5e4", box: [333, 148, 48, 92], plate: [357, 160],
+    seats: [
+      { x: 356, y: 197, kind: "back", via: [[356, LANE], [356, 190], [356, 197]] },
+      { x: 356, y: 216, kind: "stool", via: [[356, LANE], [356, 186], [342, 186], [342, 216], [356, 216]] }
+    ] };
+  TABLES.push(SOFA); TABLES.push(BOOTH);
+  var TBY = {}; TABLES.forEach(function (t) { TBY[t.id] = t; });
+  var ENTRY = { x: 416, y: 42, via: [[416, LANE], [416, 42]] };
+  var STAND = { x: 318, y: 128, via: [[318, LANE], [318, 128]] };
+
+  /* ----- background (floor, rugs, wall) ----- */
+  var bg = document.createElement("canvas"); bg.width = W; bg.height = H;
+  (function drawBackground() {
+    var c = bg.getContext("2d");
+    function B(col, x, y, w, h) { c.fillStyle = col; c.fillRect(x, y, w, h); }
+    var r = rng(11);
+    for (var y = 30; y < H; y += 6) {
+      B((y / 6) % 2 ? "#d8b07c" : "#dcb784", 0, y, W, 6);
+      B("#c99e69", 0, y + 5, W, 1);
+      var x = Math.floor(r() * 40);
+      while (x < W) { B("#c49763", x, y, 1, 5); x += 40 + Math.floor(r() * 50); }
+      for (var k = 0; k < 6; k++) B("#d2a873", Math.floor(r() * W), y + 1 + Math.floor(r() * 3), 3 + Math.floor(r() * 6), 1);
+    }
+    // round rugs under each table
+    TABLES.forEach(function (t) {
+      if (t.id === "sofa" || t.id === "booth") return;
+      var rx = 40, ry = 30, cx = t.cx, cy = t.cy + 6;
+      for (var dy = -ry; dy <= ry; dy++) {
+        var w = Math.round(rx * Math.sqrt(1 - (dy / ry) * (dy / ry)));
+        B(t.rug, cx - w, cy + dy, 2 * w, 1);
+        if (Math.abs(dy) < ry - 3) { var w2 = w - 3; if ((dy + 100) % 4 === 0) B(shade(t.rug, -0.06), cx - w2, cy + dy, 2 * w2, 1); }
+      }
+    });
+    // sofa corner rug
+    B("#e4d3bf", 292, 40, 86, 62); B("#ecdecd", 294, 42, 82, 58);
+    for (var sy = 46; sy < 98; sy += 6) B("#e0cdb6", 298, sy, 74, 1);
+    // cafe tiles around counter
+    for (var ty = 124; ty < 160; ty += 8) for (var tx = 290; tx < 336; tx += 8) B(((tx + ty) / 8) % 2 ? "#ece6da" : "#e2dbcc", tx, ty, 8, 8);
+    // elevator hall (right wing, x 384-448)
+    for (var hy = 30; hy < H; hy += 8) for (var hx = 388; hx < W; hx += 8) { B(((hx + hy) / 8) % 2 ? "#e2e6eb" : "#d3d9e0", hx, hy, 8, 8); B("#c3cad3", hx, hy + 7, 8, 1); }
+    B("#5a6270", 400, 32, 32, 9); B("#6a7380", 402, 33, 28, 7);
+    B("#aab3be", 384, 30, 4, 72); B("#aab3be", 384, 134, 4, H - 134); B("#8c96a3", 388, 30, 1, 72); B("#8c96a3", 388, 134, 1, H - 134);
+    B("#7a8796", 383, 100, 6, 3); B("#7a8796", 383, 132, 6, 3);
+    B("rgba(0,0,0,.10)", 410, 176, 30, 2); B("#8d6540", 410, 166, 30, 5); B("#a77a4e", 410, 166, 30, 1); B("#6a4a2c", 410, 171, 30, 2); B("#5a3e25", 412, 173, 2, 3); B("#5a3e25", 436, 173, 2, 3);
+    [[396, 236], [440, 236], [440, 60]].forEach(function (q) { var x = q[0], y = q[1]; B("#b0603a", x - 3, y - 5, 6, 5); B("#c8744a", x - 3, y - 5, 6, 1); B("#3f8f4f", x - 6, y - 12, 12, 7); B("#4fa85f", x - 3, y - 15, 6, 4); B("#5fbf6f", x - 1, y - 17, 3, 2); });
+    // wall
+    B("#f5f7fa", 0, 0, W, 28); B("#e6ebf0", 0, 0, W, 2);
+    for (var wx = 0; wx < W; wx += 12) B("#eef2f6", wx, 2, 1, 26);
+    B("#aab3be", 0, 28, W, 2); B("#8c96a3", 0, 30, W, 1);
+    B("#dfe4ea", 384, 0, 4, 28);
+    // private booth floor
+    B("#9fb4d9", 334, 150, 46, 88); B("#b3c5e4", 336, 152, 42, 84);
+    for (var by2 = 156; by2 < 236; by2 += 6) B("#a6bade", 338, by2, 38, 1);
+  })();
+
+  /* ----- time of day (same as 1F) ----- */
+  var PH = {
+    dawn: { skyT: "#f3b99a", skyB: "#fde0c0", cloud: "#fff1e6", sea: "#5f9fc4", seaHi: "#b8dcef", sand: "#e8d2a8", beam: "255,214,170", beamA: 0.22, slope: 1.1, tint: "rgba(255,170,120,0.07)", birds: true, surfers: true },
+    day: { skyT: "#76c0f0", skyB: "#bfe5fb", cloud: "#ffffff", sea: "#3a90cc", seaHi: "#a6d8f2", sand: "#ecd9a8", beam: "255,248,215", beamA: 0.32, slope: 0.55, tint: null, birds: true, surfers: true },
+    evening: { skyT: "#ec7f58", skyB: "#ffcb86", cloud: "#ffd6bd", sea: "#b9705f", seaHi: "#d99278", sand: "#d9b48a", beam: "255,165,95", beamA: 0.28, slope: 1.35, tint: "rgba(255,120,50,0.10)", birds: true, surfers: true },
+    night: { skyT: "#0b1430", skyB: "#1b2850", cloud: "#2a3864", sea: "#11214a", seaHi: "#3a5a8c", sand: "#4a4a5c", beam: null, beamA: 0, slope: 0, tint: "rgba(8,16,44,0.40)", birds: false, surfers: false }
+  };
+  function phaseKey(d) { var h = d.getHours() + d.getMinutes() / 60; return h >= 5 && h < 7 ? "dawn" : h >= 7 && h < 16.5 ? "day" : h >= 16.5 && h < 18.5 ? "evening" : "night"; }
+  var WINDOWS = [[10, 4, 52, 22], [70, 4, 52, 22], [262, 4, 52, 22], [322, 4, 52, 22]];
+  var tick = 0, nowT = 0;
+
+  function drawWindows(t, ph, key, d) {
+    var hour = d.getHours() + d.getMinutes() / 60;
+    var sunX = Math.round(((hour - 5) / 14) * W), moonX = Math.round((((hour + 24 - 18) % 24) / 11) * W);
+    WINDOWS.forEach(function (w) {
+      var x = w[0], y = w[1], ww = w[2], hh = w[3], horizon = y + 11;
+      P("#7a8796", x - 2, y - 2, ww + 4, hh + 4);
+      ctx.save(); ctx.beginPath(); ctx.rect(x, y, ww, hh); ctx.clip();
+      P(ph.skyT, x, y, ww, 6); P(ph.skyB, x, y + 6, ww, 5);
+      if (key === "night") {
+        for (var i = 0; i < 26; i++) { var sx = (i * 53 + 7) % W, sy = y + 1 + (i * 7) % 9; if ((tick + i * 5) % 18 < 13) P("#f4f1d8", sx, sy, 1, 1); }
+        P("#f4f1d8", moonX - 2, y + 2, 5, 5); P(ph.skyT, moonX, y + 2, 3, 3);
+      } else if (key === "day") {
+        P("#fff3b0", sunX - 2, y + 1, 5, 4); P("#fff3b0", sunX - 1, y, 3, 6); P("#fffbe0", sunX - 1, y + 2, 3, 2);
+      } else {
+        var lx = key === "dawn" ? 40 : 330;
+        P("#ff9a5a", lx - 4, horizon - 4, 9, 4); P("#ffc080", lx - 3, horizon - 5, 7, 1); P("#ffd9a0", lx - 2, horizon - 6, 5, 1);
+      }
+      [[0, 2, 1], [140, 0, 0.7], [260, 4, 1.2], [60, 6, 0.9]].forEach(function (cl) {
+        var cx = ((cl[0] + t * 2.2 * cl[2]) % (W + 60)) - 30, cy = y + 2 + cl[1];
+        P(ph.cloud, cx, cy, 12, 2); P(ph.cloud, cx + 3, cy - 1, 6, 1);
+      });
+      if (ph.birds) for (var b = 0; b < 3; b++) {
+        var bx = Math.round(((t * 9 + b * 140) % (W + 40)) - 20), by = y + 3 + (b % 2) * 3, fl = (tick + b) % 4 < 2;
+        P("#3a4456", bx, by + (fl ? 0 : 1), 1, 1); P("#3a4456", bx + 1, by + 1, 1, 1); P("#3a4456", bx + 2, by + (fl ? 0 : 1), 1, 1);
+      }
+      P(ph.sea, x, horizon, ww, 8);
+      for (var r = 0; r < 3; r++) { var wy = horizon + 1 + r * 2, off = Math.floor(t * (5 + r * 3)) % 12; for (var wx = x - 12 + off; wx < x + ww; wx += 12) P(ph.seaHi, wx + r * 4, wy, 5, 1); }
+      if (key === "night") { P("rgba(244,241,216,.6)", moonX - 1, horizon + 2, 3, 1); P("rgba(244,241,216,.4)", moonX, horizon + 4, 2, 1); }
+      if (ph.surfers) for (var k = 0; k < 2; k++) {
+        var sxp = Math.round(((t * (11 + k * 4) + k * 210) % (W + 60)) - 30), syp = horizon + 3 + k * 2 + (tick % 8 < 4 ? 0 : 1);
+        P("#ffffff", sxp - 5, syp + 3, 4, 1);
+        P(k ? "#ff7a4a" : "#ffd060", sxp - 3, syp + 3, 7, 1); P("#1d2433", sxp - 1, syp, 2, 3); P("#f1c9a5", sxp - 1, syp - 2, 2, 2);
+      }
+      var surf = Math.round(Math.sin(t * 1.1) * 1.2);
+      P(ph.sand, x, y + hh - 3, ww, 3);
+      P(key === "night" ? "rgba(200,210,230,.5)" : "rgba(255,255,255,.9)", x, y + hh - 4 + (surf > 0 ? 1 : 0), ww, 1);
+      ctx.restore();
+      P("#7a8796", x + Math.floor(ww / 2), y, 2, hh); P("#7a8796", x, y + 10, ww, 1);
+      P("#e9eef3", x - 3, y + hh + 1, ww + 6, 2);
+    });
+  }
+  function drawBeams(t, ph) {
+    if (!ph.beam) return;
+    WINDOWS.forEach(function (w) {
+      for (var sy = 31; sy < 104; sy += 2) {
+        var a = ph.beamA * (1 - (sy - 31) / 74); if (a <= 0) break;
+        ctx.fillStyle = "rgba(" + ph.beam + "," + a.toFixed(3) + ")";
+        ctx.fillRect(w[0] + Math.floor((sy - 31) * ph.slope), sy, w[2], 2);
+      }
+    });
+    for (var i = 0; i < 16; i++) {
+      var w2 = WINDOWS[i % 4], my = 33 + ((i * 23 + t * 4) % 56), mx = w2[0] + 2 + ((i * 17 + t * 2.5 * (1 + (i % 3) * 0.3)) % (w2[2] - 4)) + (my - 31) * ph.slope;
+      ctx.fillStyle = "rgba(" + ph.beam + ",0.85)"; ctx.fillRect(Math.round(mx), Math.round(my), 1, 1);
+    }
+  }
+  function drawWallDecor(t, d) {
+    // wooden plaque behind the "2F LOUNGE" sign
+    P("#6a4a2c", 150, 6, 84, 18); P("#8d6540", 151, 7, 82, 16); P("#9a7048", 152, 8, 80, 2);
+    // pennant garland
+    var cols = ["#e0533d", "#ffd060", "#3caa66", "#2f6fd6", "#e86a8a"];
+    for (var i = 0; i < 9; i++) { var px = 132 + i * 14; if (px > 146 && px < 236) continue; P("#8c96a3", px, 3, 14, 1); P(cols[i % 5], px + 4, 4, 6, 2); P(cols[i % 5], px + 5, 6, 4, 2); P(cols[i % 5], px + 6, 8, 2, 1); }
+    // wall clock
+    var cx = 246, cy = 15;
+    for (var dy = -8; dy <= 8; dy++) { var w = Math.floor(Math.sqrt(64 - dy * dy)); P("#3b4456", cx - w, cy + dy, 2 * w + 1, 1); }
+    for (var dy2 = -7; dy2 <= 7; dy2++) { var w2 = Math.floor(Math.sqrt(49 - dy2 * dy2)); P("#ffffff", cx - w2, cy + dy2, 2 * w2 + 1, 1); }
+    function hand(angle, len, col) { for (var s = 0; s <= len; s += 0.5) P(col, cx + Math.round(Math.sin(angle) * s), cy - Math.round(Math.cos(angle) * s), 1, 1); }
+    var h = d.getHours() % 12, m = d.getMinutes();
+    hand((h + m / 60) / 12 * Math.PI * 2, 3, "#1d2433"); hand(m / 60 * Math.PI * 2, 5, "#2f6fd6"); P("#d0402a", cx, cy, 1, 1);
+    // poster of the coast
+    P("#3b4456", 132, 8, 10, 16); P("#8fd0f5", 133, 9, 8, 6); P("#3a90cc", 133, 15, 8, 4); P("#ecd9a8", 133, 19, 8, 4); P("#ffd060", 138, 10, 2, 2);
+  }
+
+  /* ----- elevator (shared by 1F and 2F) ----- */
+  var elevOpen = 0, elevTarget = 0;
+  var DIGITS = { 1: [".#.", "##.", ".#.", ".#."], 2: ["##.", "..#", ".#.", "###"] };
+  function drawElevator() {
+    elevOpen += (elevTarget - elevOpen) * (REDUCED ? 1 : 0.3); if (Math.abs(elevTarget - elevOpen) < 0.03) elevOpen = elevTarget;
+    var o = Math.round(elevOpen * 15), lw = 16 - o;
+    P("#7a8796", 398, 6, 36, 23); P("#9aa5b2", 399, 7, 34, 1);
+    P("#f6ecd0", 400, 8, 32, 20); P("#fffbe8", 402, 8, 28, 1); P("#d9c79c", 400, 25, 32, 3); P("#c8b88e", 400, 8, 1, 20); P("#c8b88e", 431, 8, 1, 20);
+    if (lw > 0) {
+      P("#b9c2cc", 400, 8, lw, 20); P("#d0d7de", 400, 8, 1, 20); P("#a3adb9", 400 + lw - 1, 8, 1, 20);
+      P("#b9c2cc", 416 + o, 8, lw, 20); P("#d0d7de", 416 + o, 8, 1, 20); P("#a3adb9", 431, 8, 1, 20);
+    }
+    P("#5a6270", 398, 28, 36, 2);
+    P("#1d2433", 407, 1, 18, 5);
+    var lit = elevTarget > 0, dc = "#ffb020";
+    (DIGITS[FLOOR] || []).forEach(function (row, ry) { for (var rx = 0; rx < 3; rx++) if (row[rx] === "#") P(dc, 410 + rx, 2 + ry, 1, 1); });
+    var ac = lit && tick % 6 < 4 ? "#ffd060" : "#5a6270";
+    if (FLOOR === 1) { P(ac, 419, 2, 1, 1); P(ac, 418, 3, 3, 1); P(ac, 417, 4, 5, 1); }
+    else { P(ac, 417, 2, 5, 1); P(ac, 418, 3, 3, 1); P(ac, 419, 4, 1, 1); }
+    P("#c8cfd8", 436, 13, 5, 10); P("#7a8796", 436, 13, 5, 1);
+    P(lit && FLOOR === 1 ? "#ffb020" : "#eef2f6", 437, 15, 3, 2); P(lit && FLOOR === 2 ? "#ffb020" : "#eef2f6", 437, 19, 3, 2);
+  }
+  function hookElevator(el) {
+    ["mouseenter", "focus"].forEach(function (ev) { el.addEventListener(ev, function () { elevTarget = 1; }); });
+    ["mouseleave", "blur"].forEach(function (ev) { el.addEventListener(ev, function () { elevTarget = 0; }); });
+  }
+
+  /* ----- sprite (same as 1F) ----- */
+  function drawSprite(g, x, y, look, mood, o) {
+    o = o || {};
+    var L = Math.round(x) - 7, T = Math.round(y) - 22;
+    if (o.hop) T -= 1;
+    function Q(c, xx, yy, w, h) { g.fillStyle = c; g.fillRect(xx, yy, w, h); }
+    var skin = "#f1c9a5", dark = "#2a2430", shirt = look.color, sh = shade(look.color, -0.25), hair = look.hair, pants = "#3b4252";
+    if (!o.noShadow) { g.fillStyle = "rgba(0,0,0,.16)"; g.fillRect(L + 3, Math.round(y), 8, 1); }
+    if (!o.sitting) {
+      var f = o.frame || 0;
+      Q(pants, L + 4, T + 17, 3, f === 1 ? 3 : 4); Q(pants, L + 7, T + 17, 3, f === 2 ? 3 : 4);
+      Q("#2a2a2a", L + 4, T + (f === 1 ? 20 : 21), 3, 1); Q("#2a2a2a", L + 7, T + (f === 2 ? 20 : 21), 3, 1);
+    }
+    Q(shirt, L + 3, T + 10, 8, 7); Q(sh, L + 3, T + 16, 8, 1); Q(shade(look.color, 0.25), L + 4, T + 11, 1, 4);
+    Q("#ffffff", L + 6, T + 10, 2, 1);
+    if (o.wave) { Q(shirt, L + 1, T + 11, 2, 5); Q(shirt, L + 11, T + 7, 2, 4); Q(skin, L + 1, T + 16, 2, 1); Q(skin, L + 11, T + 5, 2, 2); }
+    else { Q(shirt, L + 1, T + 11, 2, 5); Q(shirt, L + 11, T + 11, 2, 5); Q(skin, L + 1, T + 16, 2, 1); Q(skin, L + 11, T + 16, 2, 1); }
+    if (o.mug) { Q("#ffffff", L + 11, T + 14, 3, 3); Q("#8a5a3a", L + 11, T + 14, 3, 1); }
+    Q(skin, L + 3, T + 3, 8, 7); Q(skin, L + 2, T + 5, 1, 2); Q(skin, L + 11, T + 5, 1, 2);
+    Q(hair, L + 3, T, 8, 1); Q(hair, L + 2, T + 1, 10, 3); Q(hair, L + 3, T + 3, 8, 1);
+    if (look.style === "bob") { Q(hair, L + 2, T + 3, 1, 6); Q(hair, L + 11, T + 3, 1, 6); Q(hair, L + 3, T + 4, 1, 1); }
+    else if (look.style === "pony") { Q(hair, L + 12, T + 2, 2, 5); Q(hair, L + 2, T + 3, 1, 3); Q("#e04a6a", L + 11, T + 2, 1, 1); }
+    else if (look.style === "spiky") { Q(hair, L + 4, T - 1, 1, 1); Q(hair, L + 7, T - 1, 1, 1); Q(hair, L + 10, T, 1, 1); Q(hair, L + 2, T + 3, 1, 2); Q(hair, L + 11, T + 3, 1, 2); }
+    else { Q(hair, L + 2, T + 3, 1, 2); Q(hair, L + 11, T + 3, 1, 2); Q(hair, L + 9, T + 3, 2, 1); }
+    if (mood === "happy") {
+      Q(dark, L + 4, T + 7, 1, 1); Q(dark, L + 5, T + 6, 1, 1); Q(dark, L + 6, T + 7, 1, 1);
+      Q(dark, L + 7, T + 7, 1, 1); Q(dark, L + 8, T + 6, 1, 1); Q(dark, L + 9, T + 7, 1, 1);
+      Q("#f39b9b", L + 3, T + 8, 1, 1); Q("#f39b9b", L + 10, T + 8, 1, 1);
+      Q("#c0505a", L + 5, T + 9, 4, 1);
+    } else if (mood === "talk") {
+      Q(dark, L + 5, T + 6, 1, 2); Q(dark, L + 8, T + 6, 1, 2);
+      Q("#c0505a", L + 6, T + 9, 2, (tick % 4 < 2) ? 2 : 1);
+    } else {
+      Q(dark, L + 5, T + 6, 1, 2); Q(dark, L + 8, T + 6, 1, 2);
+      Q("#c0705a", L + 6, T + 9, 2, 1);
+    }
+  }
+
+  /* ----- furniture ----- */
+  function chairBack(x, seatY) { P("#4a5263", x - 6, seatY - 14, 12, 8); P("#5d6679", x - 5, seatY - 13, 10, 2); }
+  function stool(x, y) { P("rgba(0,0,0,.12)", x - 5, y, 10, 1); P("#4a5263", x - 5, y - 6, 10, 3); P("#5d6679", x - 4, y - 6, 8, 1); P("#3a4150", x - 4, y - 3, 2, 3); P("#3a4150", x + 2, y - 3, 2, 3); }
+  function drawRoundTable(t) {
+    var cx = t.cx, cy = t.cy;
+    P("rgba(0,0,0,.12)", cx - 17, cy + 13, 34, 2);
+    P("#6a4a2c", cx - 2, cy + 8, 4, 6); P("#5a3e25", cx - 7, cy + 13, 14, 1);
+    for (var dy = -6; dy <= 9; dy++) {
+      var e = dy <= 6 ? dy : dy - 3, w = Math.round(19 * Math.sqrt(Math.max(0, 1 - (e / 6.6) * (e / 6.6))));
+      var col = dy > 6 ? "#9a6f42" : dy < -4 ? "#d9b98a" : "#c9a776";
+      if (dy === 9) col = "#86603a";
+      P(col, cx - w, cy + dy, 2 * w, 1);
+    }
+    // items on the table
+    var n = occupants(t.id).length;
+    P("#ffffff", cx - 10, cy - 2, 3, 3); P("#7a4a2a", cx - 10, cy - 2, 3, 1);
+    if (n > 1) { P("#ffffff", cx + 7, cy + 1, 3, 3); P("#7a4a2a", cx + 7, cy + 1, 3, 1); }
+    if (n > 2) { P("#2b2f38", cx - 4, cy - 4, 8, 5); P("#4a86e0", cx - 3, cy - 3, 6, 3); }
+    else { P("#f0c070", cx - 2, cy - 1, 5, 3); P("#e8a040", cx - 2, cy + 1, 5, 1); }
+  }
+  function drawSofaBack() {
+    P("rgba(0,0,0,.12)", 300, 66, 56, 2);
+    P("#4f6fa8", 302, 44, 52, 10); P("#5f80bc", 303, 45, 50, 2);
+  }
+  function drawSofaSeat() {
+    P("#5f80bc", 302, 54, 52, 8); P("#3f5a8c", 302, 61, 52, 3);
+    P("#4f6fa8", 298, 46, 5, 18); P("#4f6fa8", 353, 46, 5, 18);
+    P("#f0c070", 305, 50, 5, 4); P("#e86a8a", 346, 50, 5, 4);
+  }
+  function drawLowTable() {
+    P("rgba(0,0,0,.10)", 314, 86, 30, 2);
+    P("#b58856", 313, 76, 30, 7); P("#c99c66", 313, 76, 30, 2); P("#86603a", 315, 83, 2, 3); P("#86603a", 339, 83, 2, 3);
+    P("#ffffff", 318, 77, 3, 3); P("#7a4a2a", 318, 77, 3, 1); P("#3caa66", 332, 77, 6, 3);
+  }
+  function drawBeanbag() { P("#e07a3a", 358, 84, 14, 8); P("#f08a4a", 360, 82, 10, 3); P("#c0602a", 358, 91, 14, 1); }
+  function drawCounter() {
+    P("#8a96a6", 292, 126, 40, 12); P("#a8b3c2", 292, 126, 40, 3); P("#6f7a8a", 292, 136, 40, 2);
+    P("#2b2f38", 296, 117, 9, 10); P("#4a5263", 297, 118, 7, 3); P("#d04a4a", 302, 122, 1, 1);
+    P("#ffffff", 310, 122, 3, 4); P("#ffffff", 315, 122, 3, 4); P("#f0c070", 322, 120, 7, 6); P("#e8a040", 322, 120, 7, 2);
+    if (!REDUCED && tick % 24 < 12) { P("rgba(255,255,255,.7)", 300, 113 - (tick % 6), 1, 2); }
+  }
+  function drawPlant(x, y, big) {
+    var s = big ? 1 : 0;
+    P("#b0603a", x - 3, y - 5, 6, 5); P("#c8744a", x - 3, y - 5, 6, 1);
+    var sw = REDUCED ? 0 : Math.round(Math.sin(nowT * 1.4 + x * 0.21) * 0.9);
+    P("rgba(0,0,0,.10)", x - 4, y, 9, 1);
+    P("#3f8f4f", x - 5 - s, y - 11 - s, 10 + 2 * s, 6); P("#4fa85f", x - 3 + sw, y - 14 - s * 2, 6, 4); P("#5fbf6f", x - 1 + sw, y - 16 - s * 2, 3, 2); P("#3f8f4f", x - 6 - s, y - 9, 2, 2); P("#3f8f4f", x + 4 + s, y - 9, 2, 2);
+  }
+  function drawBoothBack() { ctx.fillStyle = "rgba(170,220,245,.45)"; ctx.fillRect(334, 149, 16, 2); ctx.fillRect(362, 149, 18, 2); P("#9fb4c4", 334, 148, 2, 4); P("#9fb4c4", 348, 148, 2, 4); P("#9fb4c4", 362, 148, 2, 4); P("#9fb4c4", 378, 148, 2, 4); }
+  function drawBoothSides() { ctx.fillStyle = "rgba(170,220,245,.35)"; ctx.fillRect(333, 150, 2, 88); ctx.fillRect(379, 150, 2, 88); P("rgba(255,255,255,.7)", 334, 156, 1, 70); P("rgba(255,255,255,.7)", 380, 156, 1, 70); }
+  function drawBoothTable() {
+    P("rgba(0,0,0,.12)", 346, 206, 20, 2);
+    P("#c9a776", 346, 196, 20, 4); P("#d9b98a", 346, 196, 20, 1); P("#9a6f42", 346, 200, 20, 3); P("#86603a", 348, 203, 2, 3); P("#86603a", 362, 203, 2, 3);
+    P("#ffffff", 349, 197, 3, 2); P("#2b2f38", 356, 196, 6, 3); P("#4a86e0", 357, 196, 4, 2);
+  }
+
+  /* ----- people & LiveKit room ----- */
+  var COLORS = ["#2f6fd6", "#d0603a", "#3caa66", "#8a5cd0", "#e0a020", "#d04a7a", "#1d3a6e", "#4aa3e0"];
+  var HAIRS = { short: "ショート", spiky: "ツンツン", bob: "ボブ", pony: "ポニー" };
+  var LK = window.LivekitClient;
+  var me = null, people = {}, room = null;
+  var state = { mic: true, cam: true };
+  function loadProfile() { try { var s = JSON.parse(localStorage.getItem("sw2f-profile") || "null"); if (s && s.name) return s; } catch (e) {} return null; }
+  function saveProfile(p) { try { localStorage.setItem("sw2f-profile", JSON.stringify(p)); } catch (e) {} }
+  function normLook(l) { l = l || {}; return { color: /^#[0-9a-f]{6}$/i.test(l.color || "") ? l.color : COLORS[0], hair: "#141414", style: HAIRS[l.style] ? l.style : "short" }; }
+  function all() { return Object.keys(people).map(function (k) { return people[k]; }); }
+  function visible(p) { return !!p; }
+  function addPerson(o) {
+    var p = { id: o.id, name: o.name, look: o.look, x: o.x, y: o.y, path: [], want: "", table: null, seat: -1, spot: o.spot || null, bubble: "", bubbleUntil: 0, speakUntil: 0, mic: false, cam: false, isMe: !!o.isMe, wave: 0, joined: o.joined || Date.now(), part: o.part || null };
+    people[p.id] = p; return p;
+  }
+  function occupants(tid) { return all().filter(function (p) { return p.table === tid; }); }
+  function currentVia(p) {
+    if (p.table && p.seat >= 0) return TBY[p.table].seats[p.seat].via;
+    if (p.spot) return p.spot.via;
+    return [[p.x, LANE]];
+  }
+  function routeTo(p, via) {
+    var pts = p.path.length ? [[p.x, LANE]] : currentVia(p).slice().reverse();
+    pts = pts.concat([[via[0][0], LANE]]).concat(via);
+    p.path = pts.map(function (q) { return [q[0], q[1]]; });
+  }
+  // Everyone computes the same seating from the "table" attributes: who joined the table list first keeps priority.
+  function layout(instant) {
+    var assign = {};
+    TABLES.forEach(function (t) {
+      var list = all().filter(function (p) { return p.want === t.id; }).sort(function (a, b) { return (a.joined - b.joined) || (a.id < b.id ? -1 : 1); });
+      var seated = list.slice(0, t.seats.length), used = {};
+      seated.forEach(function (p) { if (p.table === t.id && p.seat >= 0 && !used[p.seat]) { assign[p.id] = { t: t.id, s: p.seat }; used[p.seat] = 1; } });
+      seated.forEach(function (p) { if (assign[p.id]) return; for (var i = 0; i < t.seats.length; i++) if (!used[i]) { used[i] = 1; assign[p.id] = { t: t.id, s: i }; break; } });
+    });
+    all().forEach(function (p) {
+      var a = assign[p.id];
+      if (a && p.table === a.t && p.seat === a.s) return;
+      if (!a && !p.table) return;
+      if (a) {
+        var s = TBY[a.t].seats[a.s];
+        if (instant) { p.x = s.x; p.y = s.y; p.path = []; } else routeTo(p, s.via);
+        p.table = a.t; p.seat = a.s; p.spot = null;
+      } else {
+        if (instant) { p.x = STAND.x; p.y = STAND.y; p.path = []; } else routeTo(p, STAND.via);
+        p.table = null; p.seat = -1; p.spot = STAND;
+      }
+    });
+    if (me && me.want && !assign[me.id]) { setNote(TBY[me.want].name + "は満席でした。"); setTable(""); }
+  }
+  function say(p, text, ms) { p.bubble = text; p.bubbleUntil = performance.now() + (ms || 3500); }
+
+  var chats = {};
+  function chatOf(tid) { return chats[tid] || (chats[tid] = []); }
+  function sys(tid, text) { if (!tid) return; chatOf(tid).push({ sys: true, text: text, at: new Date() }); trim(tid); if (me && me.table === tid) renderChat(); }
+  function post(tid, p, text) { chatOf(tid).push({ who: p.name, color: p.look.color, text: text, at: new Date() }); trim(tid); if (me && me.table === tid) renderChat(); }
+  function trim(tid) { var c = chatOf(tid); if (c.length > 120) c.splice(0, c.length - 120); }
+
+  function personFrom(part, arriving) {
+    var look = {}; try { look = JSON.parse((part.attributes && part.attributes.look) || "{}"); } catch (e) {}
+    var p = people[part.identity];
+    if (!p) {
+      p = addPerson({ id: part.identity, name: part.name || "ゲスト", look: normLook(look), x: ENTRY.x, y: arriving ? 24 : ENTRY.y, spot: ENTRY, joined: part.joinedAt ? +part.joinedAt : Date.now(), part: part });
+      if (arriving) { p.path = [[ENTRY.x, ENTRY.y]]; openElevatorBriefly(); }
+    }
+    p.name = part.name || p.name; p.look = normLook(look); p.part = part;
+    p.want = (part.attributes && part.attributes.table) || "";
+    if (p.want && !TBY[p.want]) p.want = "";
+    p.mic = part.isMicrophoneEnabled; p.cam = part.isCameraEnabled;
+    return p;
+  }
+  var elevTimer = null;
+  function openElevatorBriefly() { elevTarget = 1; clearTimeout(elevTimer); elevTimer = setTimeout(function () { elevTarget = 0; }, 2400); }
+
+  function setTable(tid) {
+    if (!me || !room) return;
+    var prev = me.table;
+    me.want = tid || "";
+    layout(false);
+    if (prev && prev !== me.table) sys(prev, me.name + "さんが席を立ちました");
+    if (me.table && me.table !== prev) sys(me.table, me.name + "さんが座りました");
+    room.localParticipant.setAttributes({ table: me.want }).catch(function () { setNote("席の情報を送れませんでした。通信状態を確認してください。"); });
+    syncMedia(); renderUI();
+  }
+
+  // Subscribe only to people at my table, and only send my mic/camera while I am seated.
+  var mediaQueue = Promise.resolve();
+  function syncMedia() {
+    if (!room || !me) return;
+    var t = me.table;
+    room.remoteParticipants.forEach(function (part) {
+      var p = people[part.identity], same = !!t && !!p && p.table === t;
+      part.trackPublications.forEach(function (pub) { if (pub.isSubscribed !== same) pub.setSubscribed(same); });
+    });
+    mediaQueue = mediaQueue.then(function () {
+      var on = !!(me && me.table), lp = room.localParticipant;
+      return lp.setMicrophoneEnabled(on && state.mic).catch(function () { state.mic = false; setNote("マイクを使えませんでした。ブラウザのアドレスバー横からマイクを許可してください。"); })
+        .then(function () { return lp.setCameraEnabled(on && state.cam).catch(function () { state.cam = false; setNote("カメラを使えませんでした。ブラウザのアドレスバー横からカメラを許可してください。"); }); })
+        .then(function () { me.mic = on && state.mic; me.cam = on && state.cam; renderTiles(); renderControls(); });
+    });
+  }
+
+  function wire(r) {
+    var E = LK.RoomEvent;
+    r.on(E.ParticipantConnected, function (part) { personFrom(part, true); layout(false); syncMedia(); renderUI(); });
+    r.on(E.ParticipantDisconnected, function (part) {
+      var p = people[part.identity]; if (!p) return;
+      if (me && me.table && p.table === me.table) sys(me.table, p.name + "さんが退室しました");
+      delete people[part.identity];
+      var el = charEls[part.identity]; if (el) { el.remove(); delete charEls[part.identity]; }
+      layout(false); renderUI();
+    });
+    r.on(E.ParticipantAttributesChanged, function (changed, part) {
+      if (!part || part === r.localParticipant) return;
+      var p = personFrom(part, false), prev = p.table;
+      layout(false);
+      if (me && me.table) {
+        if (prev !== me.table && p.table === me.table) sys(me.table, p.name + "さんが座りました");
+        if (prev === me.table && p.table !== me.table) sys(me.table, p.name + "さんが席を立ちました");
+      }
+      syncMedia(); renderUI();
+    });
+    r.on(E.TrackPublished, function () { syncMedia(); });
+    r.on(E.TrackSubscribed, function (track) {
+      if (track.kind === "audio") { var a = track.attach(); document.getElementById("audio-sink").appendChild(a); }
+      renderTiles();
+    });
+    r.on(E.TrackUnsubscribed, function (track) { track.detach().forEach(function (el) { el.remove(); }); renderTiles(); });
+    function onMute(pub, part) { var p = part && people[part.identity]; if (p && !p.isMe) { p.mic = part.isMicrophoneEnabled; p.cam = part.isCameraEnabled; } renderTiles(); }
+    r.on(E.TrackMuted, onMute); r.on(E.TrackUnmuted, onMute);
+    r.on(E.TrackUnpublished, function () { renderTiles(); });
+    r.on(E.LocalTrackPublished, function () { renderTiles(); });
+    r.on(E.LocalTrackUnpublished, function () { renderTiles(); });
+    r.on(E.ActiveSpeakersChanged, function (speakers) {
+      var now = performance.now(), on = {};
+      speakers.forEach(function (s) { on[s.identity] = 1; });
+      all().forEach(function (p) { p.speakUntil = on[p.id] ? now + 1e7 : 0; });
+    });
+    r.on(E.DataReceived, function (payload, part, kind, topic) {
+      if (topic !== "chat" || !part) return;
+      var msg; try { msg = JSON.parse(new TextDecoder().decode(payload)); } catch (e) { return; }
+      var p = people[part.identity]; if (!p || !msg || typeof msg.text !== "string") return;
+      var text = msg.text.slice(0, 500);
+      say(p, text.length > 14 ? text.slice(0, 14) + "…" : text);
+      if (me && me.table && msg.t === me.table) post(me.table, p, text);
+    });
+    r.on(E.AudioPlaybackStatusChanged, function () { document.getElementById("audio-btn").hidden = r.canPlaybackAudio; });
+    r.on(E.Disconnected, function () {
+      setNote("通話から切断されました。ページを再読み込みすると入り直せます。");
+      document.getElementById("audio-sink").innerHTML = "";
+      renderUI();
+    });
+  }
+
+  function connect(prof, pass) {
+    return fetch("/api/token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: prof.name, passcode: pass }) })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          if (!res.ok) throw new Error(data.error || ("入室の準備に失敗しました(" + res.status + ")"));
+          return data;
+        });
+      })
+      .then(function (data) {
+        room = new LK.Room({ adaptiveStream: true, dynacast: true });
+        wire(room);
+        return room.connect(data.url, data.token, { autoSubscribe: false });
+      })
+      .then(function () {
+        var lp = room.localParticipant, look = normLook({ color: prof.color, style: prof.style });
+        me = addPerson({ id: lp.identity, name: prof.name, look: look, x: ENTRY.x, y: 24, spot: ENTRY, isMe: true, joined: lp.joinedAt ? +lp.joinedAt : Date.now(), part: lp });
+        room.remoteParticipants.forEach(function (part) { personFrom(part, false); });
+        layout(true);
+        openElevatorBriefly();
+        setTimeout(function () { me.path = [[ENTRY.x, ENTRY.y]]; say(me, "こんにちは"); me.wave = 12; }, 700);
+        lp.setAttributes({ table: "", look: JSON.stringify(look) }).catch(function () {});
+        document.getElementById("audio-btn").hidden = room.canPlaybackAudio;
+        setNote("入室しました。テーブルをクリックすると、そこへ歩いて座り、同じテーブルの人と話せます。");
+        renderUI();
+      });
+  }
+
+  /* ----- movement ----- */
+  function stepMovement(dt) {
+    var sp = 44 * dt;
+    Object.keys(people).forEach(function (k) {
+      var p = people[k]; if (!p.path.length) return;
+      var q = p.path[0], dx = q[0] - p.x, dy = q[1] - p.y, d = Math.sqrt(dx * dx + dy * dy);
+      if (d <= sp) { p.x = q[0]; p.y = q[1]; p.path.shift(); if (!p.path.length) onArrive(p); }
+      else { p.x += dx / d * sp; p.y += dy / d * sp; }
+    });
+  }
+  function onArrive(p) { if (p.isMe && p.table) { p.wave = 10; setNote(TBY[p.table].name + "に座りました。同じテーブルの人と話せます。"); renderUI(); } }
+
+  /* ----- render loop ----- */
+  var STATIC = [
+    { b: 46, d: drawSofaBack }, { b: 63, d: drawSofaSeat }, { b: 86, d: drawLowTable }, { b: 92, d: drawBeanbag },
+    { b: 138, d: drawCounter }, { b: 150, d: drawBoothBack }, { b: 203, d: drawBoothTable }, { b: 239, d: drawBoothSides },
+    { b: 44, d: function () { drawPlant(12, 44, true); } },
+    { b: 44, d: function () { drawPlant(282, 44, true); } },
+    { b: 112, d: function () { drawPlant(106, 112, false); } },
+    { b: 112, d: function () { drawPlant(194, 112, false); } },
+    { b: 128, d: function () { drawPlant(372, 128, true); } },
+    { b: 236, d: function () { drawPlant(12, 236, true); } },
+    { b: 236, d: function () { drawPlant(106, 236, false); } },
+    { b: 236, d: function () { drawPlant(194, 236, false); } },
+    { b: 236, d: function () { drawPlant(300, 236, true); } }
+  ];
+  TABLES.forEach(function (t) {
+    if (t.id === "sofa") return;
+    if (t.id !== "booth") STATIC.push({ b: t.cy + 9, d: function () { drawRoundTable(t); } });
+    t.seats.forEach(function (s) {
+      if (s.kind === "back") STATIC.push({ b: s.y - 0.5, d: function () { chairBack(s.x, s.y); } });
+      else STATIC.push({ b: s.y - 0.5, d: function () { stool(s.x, s.y); } });
+    });
+  });
+
+  var lastT = 0, acc = 0, startT = performance.now();
+  function frame(now) {
+    var dt = Math.min(0.1, (now - (lastT || now)) / 1000); lastT = now;
+    stepMovement(dt);
+    acc += dt;
+    if (acc >= 1 / 12) { acc = 0; tick++; draw((now - startT) / 1000); updateOverlay(now); }
+    requestAnimationFrame(frame);
+  }
+  function draw(t) {
+    nowT = t;
+    var d = new Date(), key = phaseKey(d), ph = PH[key];
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(bg, 0, 0);
+    drawWindows(t, ph, key, d);
+    drawBeams(t, ph);
+    drawWallDecor(t, d);
+    drawElevator();
+    var items = STATIC.slice();
+    Object.keys(people).forEach(function (k) {
+      var p = people[k]; if (!visible(p)) return;
+      items.push({ b: p.y, d: function () {
+        var moving = p.path.length > 0, sitting = !moving && !!p.table;
+        var talking = performance.now() < p.speakUntil;
+        if (p.wave > 0) p.wave--;
+        drawSprite(ctx, p.x, p.y, p.look, talking ? "talk" : (p.wave > 0 ? "happy" : "normal"), { frame: moving ? (Math.floor(tick / 2) % 2) + 1 : 0, sitting: sitting, wave: p.wave > 0 && tick % 4 < 2, mug: !moving && p.spot === STAND });
+      } });
+    });
+    items.sort(function (a, b) { return a.b - b.b; });
+    items.forEach(function (it) { it.d(); });
+    drawLighting(key, ph);
+  }
+  function glow(x, y, r, rgb, a) {
+    var g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, "rgba(" + rgb + "," + a + ")"); g.addColorStop(1, "rgba(" + rgb + ",0)");
+    ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  function drawLighting(key, ph) {
+    if (!ph.tint) return;
+    ctx.fillStyle = ph.tint;
+    if (key === "night") ctx.fillRect(0, 0, W, H); else ctx.fillRect(0, 30, W, H - 30);
+    if (key !== "night") return;
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    TABLES.forEach(function (t) { var n = occupants(t.id).length; glow(t.cx, t.cy, n ? 40 : 30, "255,214,150", n ? 0.24 : 0.12); });
+    glow(300, 120, 14, "255,200,140", 0.3);
+    ctx.restore();
+  }
+
+  /* ----- overlay ----- */
+  var ov = document.getElementById("ov");
+  function pct(v, total) { return (v / total * 100).toFixed(3) + "%"; }
+  function place(el, x, y) { el.style.left = pct(x, W); el.style.top = pct(y, H); }
+  function box(el, x, y, w, h) { el.style.left = pct(x, W); el.style.top = pct(y, H); el.style.width = pct(w, W); el.style.height = pct(h, H); }
+  var plates = {}, charEls = {};
+  (function buildStatic() {
+    var s = document.createElement("div"); s.className = "sign"; s.textContent = "2F LOUNGE"; place(s, 192, 15); ov.appendChild(s);
+    TABLES.forEach(function (t) {
+      var b = document.createElement("button"); b.className = "hot"; b.setAttribute("data-action", "sit"); b.setAttribute("data-table", t.id);
+      b.setAttribute("aria-label", t.name + "に座る"); b.innerHTML = '<span class="cap">ここに座る</span>';
+      box(b, t.box[0], t.box[1], t.box[2], t.box[3]); ov.appendChild(b);
+      var pl = document.createElement("div"); pl.className = "plate"; place(pl, t.plate[0], t.plate[1]); ov.appendChild(pl); plates[t.id] = pl;
+    });
+    var a = document.createElement("a"); a.className = "hot"; a.href = "https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR"; a.setAttribute("aria-label", "エレベーターで1階のオフィスへ");
+    a.innerHTML = '<span class="cap">1F(社内専用)へ</span>'; box(a, 396, 0, 46, 34); ov.appendChild(a); hookElevator(a);
+    var lb = document.createElement("div"); lb.className = "plate"; lb.textContent = "エレベーターホール"; place(lb, 418, 96); ov.appendChild(lb);
+  })();
+  function renderPlates() {
+    TABLES.forEach(function (t) {
+      var n = occupants(t.id).length, cap = t.seats.length, pl = plates[t.id];
+      pl.className = "plate" + (me && me.table === t.id ? " mine" : "") + (n >= cap ? " full" : "");
+      pl.innerHTML = esc(t.name) + '<span class="n">' + n + "/" + cap + "</span>";
+    });
+  }
+  function charEl(p) {
+    var el = charEls[p.id];
+    if (!el) {
+      el = document.createElement("button"); el.className = "char" + (p.isMe ? " me" : "");
+      el.setAttribute("data-action", "person"); el.setAttribute("data-id", p.id);
+      el.innerHTML = '<span class="bubble"></span><span class="talk"></span><span class="nm"></span>';
+      ov.appendChild(el); charEls[p.id] = el;
+    }
+    return el;
+  }
+  function updateOverlay(now) {
+    Object.keys(people).forEach(function (k) {
+      var p = people[k], el = charEl(p);
+      el.hidden = !visible(p);
+      if (el.hidden) return;
+      box(el, p.x - 7, p.y - 22, 14, 22);
+      var nm = el.querySelector(".nm"); if (nm.textContent !== p.name) nm.textContent = p.name;
+      el.setAttribute("aria-label", p.name + (p.table ? "(" + TBY[p.table].name + ")" : ""));
+      var bt = now < p.bubbleUntil ? p.bubble : "";
+      var bu = el.querySelector(".bubble"); if (bu.textContent !== bt) bu.textContent = bt;
+      el.classList.toggle("speaking", now < p.speakUntil && p.mic);
+    });
+    if (tick % 6 === 0) renderSpeaking(now);
+  }
+
+  /* ----- panels ----- */
+  function faceCanvas(p) {
+    var c = document.createElement("canvas"); c.width = 14; c.height = 22;
+    var g = c.getContext("2d"); g.imageSmoothingEnabled = false;
+    drawSprite(g, 7, 22, p.look, "normal", { sitting: true, noShadow: true });
+    return c;
+  }
+  var attached = [];
+  function renderTiles() {
+    var tilesEl = document.getElementById("tiles"), title = document.getElementById("table-title"), cnt = document.getElementById("table-count");
+    attached.forEach(function (a) { a.track.detach(a.el); });
+    attached = [];
+    tilesEl.innerHTML = "";
+    if (!me || !me.table) {
+      title.textContent = "テーブルに座っていません"; cnt.textContent = "";
+      var e = document.createElement("div"); e.className = "tile empty"; e.style.gridColumn = "1 / -1"; e.style.aspectRatio = "auto"; e.style.padding = "18px";
+      e.innerHTML = "<span>" + (me ? "フロアのテーブルをクリックすると、座って会話に入れます" : "入室すると、ここに同じテーブルの人の映像が並びます") + "</span>"; tilesEl.appendChild(e);
+      document.getElementById("leave-btn").disabled = true;
+      return;
+    }
+    var t = TBY[me.table], list = occupants(t.id);
+    list.sort(function (a, b) { return (b.isMe ? 1 : 0) - (a.isMe ? 1 : 0); });
+    title.textContent = t.name; cnt.textContent = list.length + "/" + t.seats.length + "人";
+    list.forEach(function (p) {
+      var d = document.createElement("div"); d.className = "tile"; d.setAttribute("data-tile", p.id);
+      var pub = p.part && p.part.getTrackPublication ? p.part.getTrackPublication(LK.Track.Source.Camera) : null;
+      if (pub && pub.track && !pub.isMuted) {
+        var v = pub.track.attach(); v.muted = true; v.playsInline = true; if (p.isMe) v.className = "mirror";
+        d.appendChild(v); attached.push({ track: pub.track, el: v });
+      } else d.appendChild(faceCanvas(p));
+      var mic = p.isMe ? me.mic : !!(p.part && p.part.isMicrophoneEnabled);
+      d.insertAdjacentHTML("beforeend", '<span class="tn">' + esc(p.name) + (p.isMe ? "(あなた)" : "") + '</span><span class="mic' + (mic ? "" : " off") + '">' + (mic ? "MIC" : "ミュート") + "</span>");
+      tilesEl.appendChild(d);
+    });
+    for (var i = list.length; i < t.seats.length; i++) { var e2 = document.createElement("div"); e2.className = "tile empty"; e2.innerHTML = "<span>空席</span>"; tilesEl.appendChild(e2); }
+    document.getElementById("leave-btn").disabled = false;
+  }
+  function renderSpeaking(now) {
+    document.querySelectorAll("[data-tile]").forEach(function (el) { var p = people[el.getAttribute("data-tile")]; el.classList.toggle("speaking", !!p && now < p.speakUntil); });
+  }
+  function renderChat() {
+    var ul = document.getElementById("chat"), where = document.getElementById("chat-where"), input = document.getElementById("chat-input");
+    if (!me || !me.table) { ul.innerHTML = '<li class="sys">テーブルに座ると、そのテーブルの人とチャットできます。</li>'; where.textContent = ""; input.disabled = true; return; }
+    input.disabled = false; where.textContent = TBY[me.table].name;
+    var c = chatOf(me.table);
+    ul.innerHTML = c.length ? c.map(function (m) {
+      if (m.sys) return '<li class="sys">' + esc(m.text) + "<time>" + hhmm(m.at) + "</time></li>";
+      return '<li><b style="color:' + esc(m.color) + '">' + esc(m.who) + "</b>" + esc(m.text) + "<time>" + hhmm(m.at) + "</time></li>";
+    }).join("") : '<li class="sys">まだメッセージはありません</li>';
+    ul.scrollTop = ul.scrollHeight;
+  }
+  function renderRoster() {
+    if (!me) { document.getElementById("roster").innerHTML = '<li><div class="who">入室するとフロアの様子が見えます</div></li>'; return; }
+    var html = TABLES.map(function (t) {
+      var list = occupants(t.id), mine = me.table === t.id, full = list.length >= t.seats.length;
+      return '<li class="' + (mine ? "mine" : "") + '"><div class="rh"><b>' + esc(t.name) + '</b>' +
+        (mine ? '<span class="note">あなたの席</span>' : '<button class="mini" data-action="sit" data-table="' + t.id + '"' + (full ? " disabled" : "") + ">" + (full ? "満席" : "ここに座る") + "</button>") +
+        '</div><div class="who">' + (list.length ? list.map(function (p) { return esc(p.name) + (p.isMe ? "(あなた)" : ""); }).join("、") : "だれもいません") + "</div></li>";
+    }).join("");
+    var standing = all().filter(function (p) { return !p.table; });
+    if (standing.length) html += '<li><div class="rh"><b>立ち話・休憩</b></div><div class="who">' + standing.map(function (p) { return esc(p.name) + (p.isMe ? "(あなた)" : ""); }).join("、") + "</div></li>";
+    document.getElementById("roster").innerHTML = html;
+  }
+  function renderSummary() {
+    var talking = TABLES.filter(function (t) { return occupants(t.id).length >= 2; }).length;
+    var seat = me && me.table ? TBY[me.table].name : (me ? "未着席" : "未入室");
+    document.getElementById("summary").innerHTML =
+      '<span class="chip">2Fにいる人 <b>' + all().length + "</b></span>" +
+      '<span class="chip">会話中のテーブル <b>' + talking + "</b></span>" +
+      '<span class="chip' + (me && me.table ? " busy" : "") + '">あなたの席 <b>' + esc(seat) + "</b></span>";
+  }
+  function renderControls() {
+    var m = document.getElementById("mic-btn"), c = document.getElementById("cam-btn");
+    m.setAttribute("aria-pressed", String(state.mic)); m.textContent = state.mic ? "マイク オン" : "マイク オフ";
+    c.setAttribute("aria-pressed", String(state.cam)); c.textContent = state.cam ? "カメラ オン" : "カメラ オフ";
+  }
+  function renderUI() { renderPlates(); renderSummary(); renderTiles(); renderChat(); renderRoster(); renderControls(); }
+  function setNote(t) { document.getElementById("note").textContent = t; }
+
+  /* ----- entry ----- */
+  var draft = null;
+  function openEntry() {
+    var base = loadProfile() || { name: "", color: COLORS[0], style: "short" };
+    draft = { name: base.name, color: base.color, style: base.style || "short" };
+    var m = document.getElementById("modal"); m.hidden = false;
+    m.innerHTML = '<form class="md-box" id="pf" role="dialog" aria-labelledby="pf-h">' +
+      '<h3 id="pf-h">2F ラウンジに入る</h3>' +
+      '<p class="note">名前と合言葉を入れて入室します。席に座るとカメラとマイクの許可を聞かれるので「許可」を選んでください。</p>' +
+      '<div class="field"><label for="pf-name">表示名</label><input id="pf-name" maxlength="12" required value="' + esc(draft.name) + '" placeholder="例: 山田" autocomplete="nickname"></div>' +
+      '<div class="field"><label for="pf-pass">合言葉</label><input id="pf-pass" type="password" required autocomplete="current-password"></div>' +
+      '<div class="field"><span class="lab">服の色</span><div class="swatches">' + COLORS.map(function (c) { return '<button type="button" class="sw" data-color="' + c + '" style="background:' + c + '" aria-label="色 ' + c + '" aria-pressed="' + (c === draft.color) + '"></button>'; }).join("") + "</div></div>" +
+      '<div class="field"><span class="lab">髪型</span><div class="styles">' + Object.keys(HAIRS).map(function (k) { return '<button type="button" data-style="' + k + '" aria-pressed="' + (k === draft.style) + '">' + HAIRS[k] + "</button>"; }).join("") + "</div></div>" +
+      '<div class="preview-face"><canvas id="pf-face" width="14" height="22"></canvas><span class="note">この見た目でフロアを歩きます</span></div>' +
+      '<p class="note" id="pf-err" role="alert" style="color:var(--bad)"></p>' +
+      '<div class="controls"><button class="btn" type="submit" id="pf-go">入室する</button></div></form>';
+    paintPreview();
+    var f = document.getElementById("pf");
+    f.addEventListener("click", function (e) {
+      var sw = e.target.closest("[data-color]"), st = e.target.closest("[data-style]");
+      if (sw) { draft.color = sw.getAttribute("data-color"); f.querySelectorAll("[data-color]").forEach(function (b) { b.setAttribute("aria-pressed", String(b === sw)); }); paintPreview(); }
+      if (st) { draft.style = st.getAttribute("data-style"); f.querySelectorAll("[data-style]").forEach(function (b) { b.setAttribute("aria-pressed", String(b === st)); }); paintPreview(); }
+    });
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var name = document.getElementById("pf-name").value.trim().slice(0, 12), pass = document.getElementById("pf-pass").value;
+      if (!name || !pass) return;
+      draft.name = name;
+      var go = document.getElementById("pf-go"), err = document.getElementById("pf-err");
+      go.disabled = true; go.textContent = "接続中…"; err.textContent = "";
+      connect(draft, pass).then(function () { saveProfile(draft); closeModal(); }, function (x) {
+        go.disabled = false; go.textContent = "入室する";
+        err.textContent = (x && x.message) || "接続できませんでした。";
+        if (room) { try { room.disconnect(); } catch (e2) {} room = null; }
+      });
+    });
+    setTimeout(function () { var i = document.getElementById(draft.name ? "pf-pass" : "pf-name"); if (i) i.focus(); }, 30);
+  }
+  function paintPreview() {
+    var c = document.getElementById("pf-face"); if (!c) return;
+    var g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 14, 22);
+    drawSprite(g, 7, 22, normLook({ color: draft.color, style: draft.style }), "happy", { noShadow: true });
+  }
+  function closeModal() { var m = document.getElementById("modal"); m.hidden = true; m.innerHTML = ""; }
+
+  /* ----- events ----- */
+  document.addEventListener("click", function (e) {
+    if (room && !room.canPlaybackAudio) room.startAudio().catch(function () {});
+    var b = e.target.closest("[data-action]"); if (!b) return;
+    var a = b.getAttribute("data-action");
+    if (a === "sit") {
+      if (!me) { openEntry(); return; }
+      var tid = b.getAttribute("data-table"), t = TBY[tid];
+      if (me.want === tid) { setNote("もう" + t.name + "に座っています。"); return; }
+      if (occupants(tid).length >= t.seats.length) { setNote(t.name + "は満席です。"); return; }
+      setTable(tid); setNote(t.name + "へ移動しています。");
+    } else if (a === "person") {
+      var p = people[b.getAttribute("data-id")]; if (!p || p.isMe || !me || !p.table || me.table === p.table) return;
+      if (occupants(p.table).length >= TBY[p.table].seats.length) { setNote(TBY[p.table].name + "は満席です。"); return; }
+      setTable(p.table); setNote(p.name + "さんのいる" + TBY[p.table].name + "へ移動しています。");
+    } else if (a === "leave") { if (me) { setTable(""); setNote("席を立ちました。会話からは外れています。"); } }
+    else if (a === "mic") { state.mic = !state.mic; syncMedia(); renderControls(); }
+    else if (a === "cam") { state.cam = !state.cam; syncMedia(); renderControls(); }
+    else if (a === "audio") { if (room) room.startAudio().then(function () { document.getElementById("audio-btn").hidden = true; }, function () {}); }
+    else if (a === "exit") {
+      if (room) room.disconnect();
+      room = null; me = null; people = {}; Object.keys(charEls).forEach(function (k) { charEls[k].remove(); }); charEls = {};
+      document.getElementById("audio-sink").innerHTML = "";
+      setNote("退室しました。"); renderUI(); openEntry();
+    }
+  });
+  document.getElementById("chat-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var i = document.getElementById("chat-input"), v = i.value.trim().slice(0, 500);
+    if (!v || !me || !me.table || !room) return;
+    post(me.table, me, v); say(me, v.length > 14 ? v.slice(0, 14) + "…" : v); i.value = "";
+    var dest = occupants(me.table).filter(function (p) { return !p.isMe; }).map(function (p) { return p.id; });
+    if (dest.length) room.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ t: me.table, text: v })), { reliable: true, topic: "chat", destinationIdentities: dest }).catch(function () { setNote("メッセージを送れませんでした。"); });
+  });
+
+  function tickClock() { var d = new Date(); document.getElementById("clock").textContent = (d.getMonth() + 1) + "月" + d.getDate() + "日 " + hhmm(d); }
+  tickClock(); setInterval(tickClock, 15000);
+  setInterval(function () { renderPlates(); renderSummary(); renderRoster(); }, 3000);
+
+  renderUI();
+  requestAnimationFrame(frame);
+  if (!LK) setNote("通話ライブラリを読み込めませんでした。ネット接続を確認して、ページを再読み込みしてください。");
+  else openEntry();
+})();
+</script>
+</body>
+</html>
