@@ -174,7 +174,13 @@ video.mirror{transform:scaleX(-1)}
   .cb .badge{font-size:11px;right:0}
   .bar{padding:4px;gap:0;bottom:10px;max-width:calc(100% - 12px)}
   .bar .sep{margin:4px 1px}
-  .plate,.sign,.hot .cap{display:none!important}
+  .hot .cap{display:none!important}
+  .plate{font-size:10px}
+  .toast{top:10px;bottom:auto;font-size:12.5px}
+  .prejoin > form{order:-1}
+  .pv{aspect-ratio:16/9}
+  .md-box{padding:16px;gap:10px}
+  .stage-area{-webkit-overflow-scrolling:touch}
   .bubble{font-size:10px;padding:0 4px}
   .big-body.share{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
   .big-body.share .side{flex-direction:row;overflow-x:auto}
@@ -973,6 +979,7 @@ video.mirror{transform:scaleX(-1)}
       paintFace(p, el);
     });
     if (tick % 4 === 0) renderSpeaking(now);
+    if (me && me.path.length) centerOn(me.x, false);
   }
 
   /* ----- rail, big view ----- */
@@ -1089,8 +1096,16 @@ video.mirror{transform:scaleX(-1)}
     var w = areaEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8;
     var h = areaEl.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 8;
     var sw = Math.max(0, Math.min(w, h * W / H));
-    if (window.innerWidth < 720) sw = Math.max(sw, 660);
+    if (window.innerWidth < 720) sw = Math.max(sw, Math.min(h * W / H, 1100));
     stageEl.style.width = Math.floor(sw) + "px"; stageEl.style.height = Math.floor(sw * H / W) + "px";
+    if (me) centerOn(me.x, true);
+  }
+  // on phones the map is wider than the screen: keep my character in view
+  function centerOn(x, now) {
+    if (areaEl.scrollWidth <= areaEl.clientWidth + 2) return;
+    var target = stageEl.offsetLeft + x / W * stageEl.offsetWidth - areaEl.clientWidth / 2;
+    target = Math.max(0, Math.min(target, areaEl.scrollWidth - areaEl.clientWidth));
+    areaEl.scrollLeft = now ? target : areaEl.scrollLeft + (target - areaEl.scrollLeft) * 0.25;
   }
   window.addEventListener("resize", fit);
 
