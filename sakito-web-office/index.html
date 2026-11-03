@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sakito Web オフィス 2F ラウンジ</title>
+<title>Sakito Web オフィス 1F ラウンジ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
@@ -193,17 +193,17 @@ video.mirror{transform:scaleX(-1)}
 <body>
 <div class="app">
   <header class="top">
-    <div class="ttl"><span class="brand">SAKITO WEB</span><h1>2F ラウンジ</h1></div>
+    <div class="ttl"><span class="brand">SAKITO WEB</span><h1>1F ラウンジ</h1></div>
     <div class="meta">
       <span>いる人 <b id="count">0</b></span>
       <span class="clk" id="clock"></span>
-      <a href="https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR">1F(社内専用)</a>
+      <a href="https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR">2F(社内専用)</a>
     </div>
   </header>
   <div class="main" id="main">
     <div class="stage-area" id="stage-area">
       <div class="stage" id="stage">
-        <canvas id="cv" width="448" height="240" role="img" aria-label="Sakito Webオフィス2階のラウンジ。丸テーブルが6つとソファ席、個室ブース、エレベーターホールがあり、テーブルをクリックするとそこに座れる"></canvas>
+        <canvas id="cv" width="448" height="240" role="img" aria-label="Sakito Webオフィス1階のラウンジ。丸テーブルが6つとソファ席、個室ブース、エレベーターホールがあり、テーブルをクリックするとそこに座れる"></canvas>
         <div class="ov" id="ov"></div>
       </div>
     </div>
@@ -247,7 +247,7 @@ video.mirror{transform:scaleX(-1)}
 <script>
 (function () {
   "use strict";
-  var W = 448, H = 240, LANE = 118, FLOOR = 2;
+  var W = 448, H = 240, LANE = 118, FLOOR = 1;
   var REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
   ctx.imageSmoothingEnabled = false;
@@ -415,7 +415,7 @@ video.mirror{transform:scaleX(-1)}
     }
   }
   function drawWallDecor(t, d) {
-    // wooden plaque behind the "2F LOUNGE" sign
+    // wooden plaque behind the "1F LOUNGE" sign
     P("#6a4a2c", 150, 6, 84, 18); P("#8d6540", 151, 7, 82, 16); P("#9a7048", 152, 8, 80, 2);
     // pennant garland
     var cols = ["#e0533d", "#ffd060", "#3caa66", "#2f6fd6", "#e86a8a"];
@@ -858,15 +858,15 @@ video.mirror{transform:scaleX(-1)}
   function box(el, x, y, w, h) { el.style.left = pct(x, W); el.style.top = pct(y, H); el.style.width = pct(w, W); el.style.height = pct(h, H); }
   var plates = {}, charEls = {};
   (function buildStatic() {
-    var s = document.createElement("div"); s.className = "sign"; s.textContent = "2F LOUNGE"; place(s, 192, 15); ov.appendChild(s);
+    var s = document.createElement("div"); s.className = "sign"; s.textContent = "1F LOUNGE"; place(s, 192, 15); ov.appendChild(s);
     TABLES.forEach(function (t) {
       var b = document.createElement("button"); b.className = "hot" + (t.id === "booth" || t.id === "sofa" ? " sq" : ""); b.setAttribute("data-action", "sit"); b.setAttribute("data-table", t.id);
       b.setAttribute("aria-label", t.name + "に座る"); b.innerHTML = '<span class="cap">ここに座る</span>';
       box(b, t.box[0], t.box[1], t.box[2], t.box[3]); ov.appendChild(b);
       var pl = document.createElement("div"); pl.className = "plate"; place(pl, t.plate[0], t.plate[1]); ov.appendChild(pl); plates[t.id] = pl;
     });
-    var a = document.createElement("a"); a.className = "hot sq"; a.href = "https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR"; a.setAttribute("aria-label", "エレベーターで1階のオフィスへ(社内専用)");
-    a.innerHTML = '<span class="cap">1F(社内専用)へ</span>'; box(a, 396, 0, 46, 34); ov.appendChild(a); hookElevator(a);
+    var a = document.createElement("a"); a.className = "hot sq"; a.href = "https://claude.ai/artifact/EP51sztZeDAAts6cfgXpSR"; a.setAttribute("aria-label", "エレベーターで2階のAI社員オフィスへ(社内専用)");
+    a.innerHTML = '<span class="cap">2F(社内専用)へ</span>'; box(a, 396, 0, 46, 34); ov.appendChild(a); hookElevator(a);
     var lb = document.createElement("div"); lb.className = "plate"; lb.textContent = "エレベーターホール"; place(lb, 418, 96); ov.appendChild(lb);
   })();
   function renderPlates() {
@@ -1103,7 +1103,7 @@ video.mirror{transform:scaleX(-1)}
     var base = load("sw2f-profile") || { name: "", color: COLORS[0], style: "short" };
     draft = { name: base.name, color: base.color, style: base.style || "short" };
     openModal(
-      '<h3>2F ラウンジに入る</h3>' +
+      '<h3>1F ラウンジに入る</h3>' +
       '<div class="prejoin"><div style="display:flex;flex-direction:column;gap:10px">' +
         '<div class="pv"><video id="pv-video" class="mirror" autoplay playsinline muted hidden></video><span class="pvmsg" id="pv-msg">入る前に、カメラの映り方とマイクの音を確認できます。</span></div>' +
         '<div class="field"><span class="lab">マイクの音量(話すと緑のバーが動きます)</span><div class="meter"><i id="pv-level"></i></div></div>' +
@@ -1157,7 +1157,7 @@ video.mirror{transform:scaleX(-1)}
     drawSprite(g, 7, 22, normLook({ color: draft.color, style: draft.style }), "happy", { noShadow: true });
   }
   function openExitConfirm() {
-    openModal('<h3>退出しますか?</h3><p class="note">2階のラウンジから出て、通話を終了します。</p><div class="row-end"><button class="btn ghost" data-action="modal-close">キャンセル</button><button class="btn danger" data-action="exit-yes"><i class="ti ti-door-exit" aria-hidden="true"></i> 退出する</button></div>', true);
+    openModal('<h3>退出しますか?</h3><p class="note">1階のラウンジから出て、通話を終了します。</p><div class="row-end"><button class="btn ghost" data-action="modal-close">キャンセル</button><button class="btn danger" data-action="exit-yes"><i class="ti ti-door-exit" aria-hidden="true"></i> 退出する</button></div>', true);
   }
   function openGone(title, text) {
     openModal("<h3>" + esc(title) + '</h3><p class="note">' + esc(text) + '</p><div class="row-end"><button class="btn" data-action="reenter">もう一度入る</button></div>', true);
